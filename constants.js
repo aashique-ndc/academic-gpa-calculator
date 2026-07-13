@@ -1,7 +1,7 @@
 // assets/js/constants.js
 // Global Constants for AcadCalc
 
-export const APP_NAME = "AcadCalc";
+export const APP_NAME = "MarsCal";
 export const VERSION = "1.0.0";
 export const AUTHOR = "Grok Assisted";
 

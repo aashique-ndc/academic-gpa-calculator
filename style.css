@@ -1,0 +1,49 @@
+/* assets/css/style.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+.glass {
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(12px);
+}
+
+.dark .glass {
+    background: rgba(17, 17, 17, 0.75);
+}
+
+.tab-btn {
+    transition: all 0.3s ease;
+}
+
+.tab-btn.active {
+    border-bottom: 3px solid rgb(37 99 235);
+    color: rgb(37 99 235);
+    font-weight: 600;
+}
+
+.course-row {
+    transition: all 0.2s ease;
+}
+
+.course-row:hover {
+    background-color: #f8fafc;
+}
+
+.dark .course-row:hover {
+    background-color: #1f2937;
+}
+
+input, select {
+    transition: all 0.2s ease;
+}
+
+input:focus, select:focus {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+/* Print Styles will be in separate file */

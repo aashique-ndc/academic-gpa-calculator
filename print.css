@@ -1,0 +1,47 @@
+/* assets/css/print.css */
+
+/* Print Styles for Official Transcript */
+@media print {
+    body * {
+        visibility: hidden;
+    }
+    
+    .print-area, .print-area * {
+        visibility: visible;
+    }
+    
+    .print-area {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        background: white;
+        color: black;
+        padding: 40px;
+        box-shadow: none;
+    }
+    
+    .no-print {
+        display: none !important;
+    }
+    
+    /* A4 Size Simulation */
+    .transcript {
+        width: 210mm;
+        min-height: 297mm;
+        margin: 0 auto;
+        border: 1px solid #000;
+        padding: 20mm;
+        background: white;
+    }
+    
+    .signature-section {
+        margin-top: 80px;
+        display: flex;
+        justify-content: space-between;
+    }
+    
+    h1, h2, h3 {
+        color: #000 !important;
+    }
+}

@@ -1,4 +1,4 @@
-# AcadCalc - Academic GPA, SGPA & CGPA Calculator
+# MarsCal - Academic GPA, SGPA & CGPA Calculator
 
 A modern, fully client-side academic calculator supporting multiple national grading systems.
 

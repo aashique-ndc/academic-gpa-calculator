@@ -3,53 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MarsCal – GPA, SGPA & CGPA on Mars</title>
-    <!-- Tailwind + Fonts + Chart.js + Sortable (all CDN, no local assets) -->
+    <title>MarsCal - GPA, SGPA & CGPA Calculator</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <style>
-        /* inter font */
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-        * { font-family: 'Inter', system-ui, sans-serif; }
-        /* custom mars vibe */
-        .mars-gradient { background: linear-gradient(145deg, #b53b2c, #7a2e1a); }
-        .mars-border { border-color: #c05a3a; }
-        .mars-shadow { box-shadow: 0 12px 30px -10px rgba(181, 59, 44, 0.4); }
-        .tab-btn.active { border-bottom: 4px solid #d95a3a; color: #d95a3a; }
-        .tab-btn { transition: all 0.2s; }
-        .bg-mars-dark { background-color: #1e1614; }
-        .bg-mars-card { background-color: #2a201c; }
-        .text-mars { color: #e68a6f; }
-        .border-mars { border-color: #4a322a; }
-        /* scroll bar */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #2a201c; }
-        ::-webkit-scrollbar-thumb { background: #b53b2c; border-radius: 20px; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body { font-family: 'Inter', system-ui, sans-serif; }
     </style>
-    <!-- all logic inlined (no external js files) -->
 </head>
-<body class="bg-[#120e0c] text-[#eee5de] min-h-screen transition-colors">
-
-    <div class="max-w-7xl mx-auto px-4">
-        <!-- HEADER : MarsCal -->
-        <header class="sticky top-0 z-50 bg-[#1e1614]/90 backdrop-blur-lg border-b border-[#4a322a]">
-            <div class="px-4 py-5 flex items-center justify-between">
+<body class="bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 min-h-screen transition-colors">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <header class="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border-b border-gray-200 dark:border-gray-700">
+            <div class="px-6 py-5 flex items-center justify-between">
                 <div class="flex items-center gap-3">
-                    <div class="w-12 h-12 mars-gradient rounded-2xl flex items-center justify-center text-white font-black text-4xl shadow-lg">⭒</div>
+                    <div class="w-11 h-11 bg-gradient-to-br from-blue-600 to-violet-600 rounded-2xl flex items-center justify-center text-white font-bold text-3xl shadow-lg">M</div>
                     <div>
-                        <h1 class="text-4xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-[#f09070] to-[#d95a3a]">MarsCal</h1>
-                        <p class="text-sm text-[#b08a7a] -mt-1">intergalactic GPA · SGPA · CGPA</p>
+                        <h1 class="text-3xl font-bold tracking-tight">MarsCal</h1>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 -mt-1">Academic Performance Calculator</p>
                     </div>
                 </div>
                 <div class="flex items-center gap-4">
                     <button onclick="toggleTheme()" id="theme-toggle" 
-                            class="p-3 rounded-2xl hover:bg-[#3a2a22] transition-all text-[#d95a3a]">
-                        <i class="fas fa-rocket text-xl"></i>
+                            class="p-3 rounded-2xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-all">
+                        <i class="fas fa-moon text-xl"></i>
                     </button>
                     <button onclick="exportToPDF()" 
-                            class="flex items-center gap-2 px-6 py-3 mars-gradient text-white rounded-2xl font-medium transition-all mars-shadow">
+                            class="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-medium transition-all shadow-md">
                         <i class="fas fa-download"></i>
                         <span>Export PDF</span>
                     </button>
@@ -57,96 +39,88 @@
             </div>
         </header>
 
-        <!-- Main row : sidebar + content -->
-        <div class="flex flex-col lg:flex-row gap-6 py-6">
-            <!-- Sidebar : mars styled -->
-            <div class="lg:w-96 bg-[#1e1614] border border-[#4a322a] rounded-3xl p-6 lg:min-h-[80vh] overflow-auto">
+        <div class="flex flex-col lg:flex-row">
+            <!-- Sidebar -->
+            <div class="lg:w-96 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 p-6 lg:min-h-screen overflow-auto">
                 <!-- Student Info -->
                 <div class="mb-8">
-                    <h2 class="text-lg font-semibold mb-4 flex items-center gap-2 text-[#e68a6f]"><i class="fas fa-user-astronaut"></i> Crew Info</h2>
-                    <input id="student-name" type="text" placeholder="Explorer name" 
-                           class="w-full px-4 py-3 rounded-2xl border border-[#4a322a] focus:outline-none focus:border-[#d95a3a] bg-[#2a201c] text-[#eee5de]">
+                    <h2 class="text-lg font-semibold mb-4 flex items-center gap-2"><i class="fas fa-user-circle"></i> Student Information</h2>
+                    <div class="space-y-4">
+                        <input id="student-name" type="text" placeholder="Full Name" 
+                               class="w-full px-4 py-3 rounded-2xl border border-gray-200 dark:border-gray-700 focus:outline-none focus:border-blue-500 bg-white dark:bg-gray-800">
+                    </div>
                 </div>
 
                 <!-- Grading System -->
                 <div class="mb-8">
-                    <h2 class="text-lg font-semibold mb-4 flex items-center gap-2 text-[#e68a6f]"><i class="fas fa-globe-americas"></i> Grading System</h2>
+                    <h2 class="text-lg font-semibold mb-4 flex items-center gap-2"><i class="fas fa-graduation-cap"></i> Grading System</h2>
                     <select id="grading-system" onchange="changeGradingSystem()" 
-                            class="w-full px-4 py-3 rounded-2xl border border-[#4a322a] focus:outline-none bg-[#2a201c] text-[#eee5de]">
+                            class="w-full px-4 py-3 rounded-2xl border border-gray-200 dark:border-gray-700 focus:outline-none bg-white dark:bg-gray-800">
                     </select>
                 </div>
 
                 <!-- Credit Mode -->
                 <div>
-                    <h2 class="text-lg font-semibold mb-4 text-[#e68a6f]">Credit Mode</h2>
+                    <h2 class="text-lg font-semibold mb-4">Credit System</h2>
                     <div class="flex gap-3">
                         <button onclick="setCreditMode('equal')" id="equal-btn"
-                                class="flex-1 py-4 rounded-2xl border-2 font-medium transition-all border-[#4a322a] hover:border-[#d95a3a]">Equal</button>
+                                class="flex-1 py-4 rounded-2xl border-2 font-medium transition-all">Equal Credit</button>
                         <button onclick="setCreditMode('variable')" id="variable-btn"
-                                class="flex-1 py-4 rounded-2xl border-2 font-medium transition-all border-[#4a322a] hover:border-[#d95a3a]">Variable</button>
+                                class="flex-1 py-4 rounded-2xl border-2 font-medium transition-all">Variable Credit</button>
                     </div>
                 </div>
-                <!-- small mission badge -->
-                <div class="mt-8 text-center text-[#7a5a4a] text-xs"><i class="fas fa-map-pin"></i> Olympus Mons · Sol 2026</div>
             </div>
 
             <!-- Main Content -->
-            <div class="flex-1 bg-[#1e1614] border border-[#4a322a] rounded-3xl p-6 lg:p-8">
+            <div class="flex-1 p-6 lg:p-8">
                 <!-- Tabs -->
-                <div class="flex border-b border-[#4a322a] mb-8">
-                    <button onclick="showTab(0)" class="tab-btn active px-8 py-4 font-semibold text-[#b08a7a]"><i class="fas fa-layer-group mr-2"></i>Semesters</button>
-                    <button onclick="showTab(1)" class="tab-btn px-8 py-4 font-semibold text-[#b08a7a]"><i class="fas fa-chart-pie mr-2"></i>Charts</button>
-                    <button onclick="showTab(2)" class="tab-btn px-8 py-4 font-semibold text-[#b08a7a]"><i class="fas fa-exchange-alt mr-2"></i>Convert</button>
+                <div class="flex border-b border-gray-200 dark:border-gray-700 mb-8">
+                    <button onclick="showTab(0)" class="tab-btn active px-8 py-4 font-semibold">Semesters</button>
+                    <button onclick="showTab(1)" class="tab-btn px-8 py-4 font-semibold">Charts</button>
+                    <button onclick="showTab(2)" class="tab-btn px-8 py-4 font-semibold">Convert</button>
                 </div>
 
                 <!-- Semesters Tab -->
                 <div id="tab-0" class="tab-content">
                     <div id="semesters-container" class="space-y-8"></div>
                     <button onclick="addSemester()" 
-                            class="mt-8 w-full py-6 border-2 border-dashed border-[#4a322a] rounded-3xl text-[#b08a7a] hover:text-[#d95a3a] hover:border-[#d95a3a] flex items-center justify-center gap-3 text-lg transition">
-                        <i class="fas fa-plus"></i> Add new semester
+                            class="mt-8 w-full py-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-3xl text-gray-500 hover:text-blue-600 hover:border-blue-300 flex items-center justify-center gap-3 text-lg">
+                        <i class="fas fa-plus"></i> Add New Semester
                     </button>
                 </div>
 
                 <!-- Charts Tab -->
                 <div id="tab-1" class="tab-content hidden">
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <div class="bg-[#2a201c] rounded-3xl p-6 border border-[#4a322a]">
-                            <h3 class="font-semibold mb-4 text-[#e68a6f]">Grade distribution</h3>
-                            <canvas id="pieChart" height="280"></canvas>
+                        <div class="bg-white dark:bg-gray-900 rounded-3xl p-6 shadow-sm">
+                            <h3 class="font-semibold mb-4">Grade Distribution</h3>
+                            <canvas id="pieChart" height="300"></canvas>
                         </div>
-                        <div class="bg-[#2a201c] rounded-3xl p-6 border border-[#4a322a]">
-                            <h3 class="font-semibold mb-4 text-[#e68a6f]">GPA trend</h3>
-                            <canvas id="lineChart" height="280"></canvas>
+                        <div class="bg-white dark:bg-gray-900 rounded-3xl p-6 shadow-sm">
+                            <h3 class="font-semibold mb-4">GPA Trend</h3>
+                            <canvas id="lineChart" height="300"></canvas>
                         </div>
                     </div>
                 </div>
 
                 <!-- Convert Tab -->
                 <div id="tab-2" class="tab-content hidden">
-                    <div class="bg-[#2a201c] rounded-3xl p-8 border border-[#4a322a]">
-                        <h3 class="font-semibold mb-6 text-[#e68a6f]">Result Conversion</h3>
-                        <p class="text-[#b08a7a]">Select target grading system (coming soon)</p>
-                        <div class="mt-4 flex gap-4 flex-wrap">
-                            <select class="bg-[#1e1614] border border-[#4a322a] rounded-2xl px-4 py-3 text-[#eee5de]"><option>USA 4.0</option><option>Europe ECTS</option></select>
-                            <button class="mars-gradient px-6 py-3 rounded-2xl text-white">Convert</button>
-                        </div>
+                    <div class="bg-white dark:bg-gray-900 rounded-3xl p-8">
+                        <h3 class="font-semibold mb-6">Result Conversion</h3>
+                        <p class="text-gray-500">Select target grading system to convert</p>
                     </div>
                 </div>
 
-                <!-- Summary Card : Mars style -->
-                <div class="mt-12 mars-gradient text-white rounded-3xl p-8 mars-shadow border border-[#d95a3a]/40">
+                <!-- Summary Card -->
+                <div class="mt-12 bg-gradient-to-br from-blue-500 to-violet-600 text-white rounded-3xl p-8 shadow-xl">
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
                         <div>
-                            <div id="cgpa-display" class="text-5xl font-extrabold tracking-wider">0.00</div>
-                            <div class="text-sm opacity-80">CGPA (Martian)</div>
+                            <div id="cgpa-display" class="text-5xl font-bold">0.00</div>
+                            <div class="text-sm opacity-75">CGPA</div>
                         </div>
                         <div>
-                            <div id="total-credits" class="text-5xl font-extrabold">0</div>
-                            <div class="text-sm opacity-80">Total Credits</div>
-                        </div>
-                        <div class="col-span-2 flex items-center justify-end gap-2 text-sm opacity-80">
-                            <i class="fas fa-robot"></i> <span>MarsCal v2 · deep space grading</span>
+                            <div id="total-credits" class="text-5xl font-bold">0</div>
+                            <div class="text-sm opacity-75">Total Credits</div>
                         </div>
                     </div>
                 </div>
@@ -155,39 +129,88 @@
     </div>
 
     <!-- Toast -->
-    <div id="toast" class="hidden fixed bottom-4 right-4 bg-[#2a201c] border border-[#d95a3a] text-[#eee5de] px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3"></div>
+    <div id="toast" class="hidden fixed bottom-4 right-4 bg-gray-800 text-white px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3"></div>
 
-    <!-- ======================== ALL JAVASCRIPT INLINE ======================== -->
     <script>
-        // --------------------------------------------------------------
-        // 1. CONSTANTS & GRADING DATA
-        // --------------------------------------------------------------
-        const GRADE_POINTS = {
-            'A+': 4.0, 'A': 4.0, 'A-': 3.7,
-            'B+': 3.3, 'B': 3.0, 'B-': 2.7,
-            'C+': 2.3, 'C': 2.0, 'C-': 1.7,
-            'D+': 1.3, 'D': 1.0, 'F': 0.0
-        };
-
+        // ============================================================
+        // GRADING SYSTEMS (as requested)
+        // ============================================================
         const GRADING_SYSTEMS = {
-            'USA 4.0': { 'A+': 4.0, 'A': 4.0, 'A-': 3.7, 'B+': 3.3, 'B': 3.0, 'B-': 2.7, 'C+': 2.3, 'C': 2.0, 'C-': 1.7, 'D+': 1.3, 'D': 1.0, 'F': 0.0 },
-            'Europe ECTS': { 'A': 5.0, 'B': 4.0, 'C': 3.0, 'D': 2.0, 'E': 1.0, 'F': 0.0 }
+            'Bangladesh (5.00 Scale)': {
+                'A+': 5.00, 'A': 4.50, 'A-': 4.00,
+                'B+': 3.50, 'B': 3.00, 'B-': 2.50,
+                'C+': 2.00, 'C': 1.50, 'D': 1.00, 'F': 0.00
+            },
+            'Bangladesh (4.00 Scale)': {
+                'A+': 4.00, 'A': 3.75, 'A-': 3.50,
+                'B+': 3.25, 'B': 3.00, 'B-': 2.75,
+                'C+': 2.50, 'C': 2.25, 'D': 2.00, 'F': 0.00
+            },
+            'India (10.00 Scale)': {
+                'O': 10.0, 'A+': 9.0, 'A': 8.0,
+                'B+': 7.0, 'B': 6.0, 'C': 5.0,
+                'D': 4.0, 'F': 0.0
+            },
+            'Pakistan (4.00 Scale)': {
+                'A+': 4.00, 'A': 3.70, 'A-': 3.30,
+                'B+': 3.00, 'B': 2.70, 'B-': 2.30,
+                'C+': 2.00, 'C': 1.70, 'C-': 1.30,
+                'D': 1.00, 'F': 0.00
+            },
+            'United States (4.00 Scale)': {
+                'A+': 4.00, 'A': 4.00, 'A-': 3.70,
+                'B+': 3.30, 'B': 3.00, 'B-': 2.70,
+                'C+': 2.30, 'C': 2.00, 'C-': 1.70,
+                'D+': 1.30, 'D': 1.00, 'F': 0.00
+            },
+            'United Kingdom': {
+                'First': 4.00, 'Upper Second': 3.50, 'Lower Second': 3.00,
+                'Third': 2.00, 'Pass': 1.00, 'Fail': 0.00
+            },
+            'Europe (ECTS)': {
+                'A': 5.00, 'B': 4.00, 'C': 3.00,
+                'D': 2.00, 'E': 1.00, 'F': 0.00
+            },
+            'China (Common 4.00 Scale)': {
+                'A+': 4.00, 'A': 3.70, 'A-': 3.30,
+                'B+': 3.00, 'B': 2.70, 'B-': 2.30,
+                'C+': 2.00, 'C': 1.70, 'C-': 1.30,
+                'D+': 1.00, 'D': 0.70, 'F': 0.00
+            },
+            'South Korea (4.30 Scale)': {
+                'A+': 4.30, 'A0': 4.00, 'A-': 3.70,
+                'B+': 3.30, 'B0': 3.00, 'B-': 2.70,
+                'C+': 2.30, 'C0': 2.00, 'C-': 1.70,
+                'D+': 1.30, 'D0': 1.00, 'F': 0.00
+            },
+            'Malaysia (4.00 Scale)': {
+                'A+': 4.00, 'A': 3.70, 'A-': 3.30,
+                'B+': 3.00, 'B': 2.70, 'B-': 2.30,
+                'C+': 2.00, 'C': 1.70, 'C-': 1.30,
+                'D+': 1.00, 'D': 0.70, 'F': 0.00
+            },
+            'Custom Grading System': {
+                'A+': 4.00, 'A': 3.70, 'A-': 3.30,
+                'B+': 3.00, 'B': 2.70, 'B-': 2.30,
+                'C+': 2.00, 'C': 1.70, 'C-': 1.30,
+                'D+': 1.00, 'D': 0.70, 'F': 0.00
+            }
         };
 
-        // default grading
-        let currentGrading = 'USA 4.0';
-        let gradeMap = GRADE_POINTS;
-
-        // state
-        let semesters = []; // { id, name, courses: [{name, grade, credit}] }
-        let creditMode = 'equal'; // 'equal' or 'variable'
+        // ============================================================
+        // STATE
+        // ============================================================
+        let currentGrading = 'Bangladesh (5.00 Scale)';
+        let gradeMap = GRADING_SYSTEMS[currentGrading];
+        let semesters = [];
+        let creditMode = 'equal';
         let semesterCounter = 0;
         let pieChartInstance = null;
         let lineChartInstance = null;
 
-        // --------------------------------------------------------------
-        // 2. UTILITY FUNCTIONS
-        // --------------------------------------------------------------
+        // ============================================================
+        // CORE FUNCTIONS
+        // ============================================================
         function getGradePoint(grade) {
             return gradeMap[grade] !== undefined ? gradeMap[grade] : 0;
         }
@@ -207,8 +230,7 @@
         function calculateCGPA() {
             let totalPoints = 0, totalCredits = 0;
             semesters.forEach(sem => {
-                let courses = sem.courses || [];
-                courses.forEach(c => {
+                (sem.courses || []).forEach(c => {
                     let cr = creditMode === 'equal' ? 1 : (parseFloat(c.credit) || 1);
                     let gp = getGradePoint(c.grade);
                     totalPoints += gp * cr;
@@ -228,9 +250,9 @@
             return sum;
         }
 
-        // --------------------------------------------------------------
-        // 3. STORAGE (localStorage)
-        // --------------------------------------------------------------
+        // ============================================================
+        // STORAGE
+        // ============================================================
         function saveState() {
             try {
                 const data = { semesters, creditMode, currentGrading };
@@ -247,54 +269,54 @@
                 if (data.creditMode) creditMode = data.creditMode;
                 if (data.currentGrading) {
                     currentGrading = data.currentGrading;
-                    gradeMap = GRADING_SYSTEMS[currentGrading] || GRADE_POINTS;
+                    gradeMap = GRADING_SYSTEMS[currentGrading] || GRADING_SYSTEMS['Bangladesh (5.00 Scale)'];
                 }
                 return true;
             } catch(e) { return false; }
         }
 
-        // --------------------------------------------------------------
-        // 4. UI RENDER
-        // --------------------------------------------------------------
+        // ============================================================
+        // RENDER
+        // ============================================================
         function renderSemesters() {
             const container = document.getElementById('semesters-container');
             if (!container) return;
             container.innerHTML = '';
             semesters.forEach((sem, idx) => {
                 const div = document.createElement('div');
-                div.className = 'bg-[#2a201c] rounded-3xl p-5 border border-[#4a322a]';
+                div.className = 'bg-white dark:bg-gray-900 rounded-3xl p-5 border border-gray-200 dark:border-gray-700';
                 div.dataset.index = idx;
                 div.innerHTML = `
                     <div class="flex items-center justify-between mb-4">
                         <div class="flex items-center gap-3">
-                            <i class="fas fa-grip-vertical text-[#7a5a4a] cursor-grab handle"></i>
-                            <span class="font-semibold text-[#e68a6f]">Semester ${idx+1}</span>
+                            <i class="fas fa-grip-vertical text-gray-400 cursor-grab handle"></i>
+                            <span class="font-semibold">Semester ${idx+1}</span>
                             <input type="text" value="${sem.name || ''}" placeholder="e.g. Fall 2026" 
-                                   class="bg-[#1e1614] border border-[#4a322a] rounded-xl px-3 py-1 text-sm w-36 focus:outline-none focus:border-[#d95a3a] text-[#eee5de]">
+                                   class="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-1 text-sm w-36 focus:outline-none focus:border-blue-500">
                         </div>
                         <div class="flex gap-2">
-                            <span class="text-sm text-[#b08a7a]">GPA: <strong class="text-[#e68a6f]">${calculateGPA(sem.courses).toFixed(2)}</strong></span>
-                            <button onclick="removeSemester(${idx})" class="text-[#7a5a4a] hover:text-[#d95a3a]"><i class="fas fa-trash"></i></button>
+                            <span class="text-sm text-gray-500">GPA: <strong>${calculateGPA(sem.courses).toFixed(2)}</strong></span>
+                            <button onclick="removeSemester(${idx})" class="text-gray-400 hover:text-red-500"><i class="fas fa-trash"></i></button>
                         </div>
                     </div>
                     <div class="space-y-3">
                         ${(sem.courses || []).map((c, ci) => `
                             <div class="flex items-center gap-3 course-row" data-sem="${idx}" data-ci="${ci}">
-                                <input type="text" value="${c.name || ''}" placeholder="Course" class="flex-1 bg-[#1e1614] border border-[#4a322a] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#d95a3a] text-[#eee5de]">
-                                <select class="bg-[#1e1614] border border-[#4a322a] rounded-xl px-3 py-2 text-sm focus:outline-none text-[#eee5de] grade-select">
+                                <input type="text" value="${c.name || ''}" placeholder="Course" class="flex-1 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500">
+                                <select class="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-sm focus:outline-none grade-select">
                                     ${Object.keys(gradeMap).map(g => `<option value="${g}" ${c.grade===g?'selected':''}>${g}</option>`).join('')}
                                 </select>
-                                ${creditMode === 'variable' ? `<input type="number" value="${c.credit || 1}" min="0.5" step="0.5" class="w-16 bg-[#1e1614] border border-[#4a322a] rounded-xl px-2 py-2 text-sm focus:outline-none text-[#eee5de] credit-input">` : ''}
-                                <button onclick="removeCourse(${idx}, ${ci})" class="text-[#7a5a4a] hover:text-[#d95a3a]"><i class="fas fa-times"></i></button>
+                                ${creditMode === 'variable' ? `<input type="number" value="${c.credit || 1}" min="0.5" step="0.5" class="w-16 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-2 py-2 text-sm focus:outline-none credit-input">` : ''}
+                                <button onclick="removeCourse(${idx}, ${ci})" class="text-gray-400 hover:text-red-500"><i class="fas fa-times"></i></button>
                             </div>
                         `).join('')}
                     </div>
-                    <button onclick="addCourse(${idx})" class="mt-3 text-sm text-[#b08a7a] hover:text-[#d95a3a] flex items-center gap-2"><i class="fas fa-plus"></i> Add course</button>
+                    <button onclick="addCourse(${idx})" class="mt-3 text-sm text-gray-500 hover:text-blue-600 flex items-center gap-2"><i class="fas fa-plus"></i> Add course</button>
                 `;
                 container.appendChild(div);
             });
 
-            // re-sync courses events (delegation)
+            // Event listeners
             document.querySelectorAll('.course-row').forEach(row => {
                 const semIdx = parseInt(row.dataset.sem);
                 const ci = parseInt(row.dataset.ci);
@@ -313,7 +335,7 @@
                     gradeSelect.addEventListener('change', function() {
                         if (semesters[semIdx] && semesters[semIdx].courses[ci]) {
                             semesters[semIdx].courses[ci].grade = this.value;
-                            saveState(); updateSummary(); renderSemesters(); // re-render to update GPA
+                            saveState(); updateSummary(); renderSemesters();
                         }
                     });
                 }
@@ -327,8 +349,7 @@
                 }
             });
 
-            // semester name sync
-            container.querySelectorAll('.bg-[#2a201c]').forEach((semDiv, idx) => {
+            container.querySelectorAll('.bg-white, .bg-gray-900').forEach((semDiv, idx) => {
                 const nameInput = semDiv.querySelector('input[type="text"]');
                 if (nameInput && semesters[idx]) {
                     nameInput.value = semesters[idx].name || '';
@@ -350,9 +371,9 @@
             document.getElementById('total-credits').textContent = totalCreditsAll();
         }
 
-        // --------------------------------------------------------------
-        // 5. COURSE & SEMESTER MANAGEMENT
-        // --------------------------------------------------------------
+        // ============================================================
+        // SEMESTER / COURSE MANAGEMENT
+        // ============================================================
         function addSemester() {
             semesters.push({ id: semesterCounter++, name: `Sem ${semesters.length+1}`, courses: [] });
             renderSemesters();
@@ -368,7 +389,8 @@
 
         function addCourse(semIdx) {
             if (!semesters[semIdx]) return;
-            semesters[semIdx].courses.push({ name: 'New course', grade: 'A', credit: 1 });
+            const firstGrade = Object.keys(gradeMap)[0] || 'A';
+            semesters[semIdx].courses.push({ name: 'New course', grade: firstGrade, credit: 1 });
             renderSemesters();
             updateCharts();
         }
@@ -380,13 +402,13 @@
             updateCharts();
         }
 
-        // --------------------------------------------------------------
-        // 6. GRADING SYSTEM & CREDIT MODE
-        // --------------------------------------------------------------
+        // ============================================================
+        // GRADING SYSTEM & CREDIT MODE
+        // ============================================================
         function changeGradingSystem() {
             const sel = document.getElementById('grading-system');
             currentGrading = sel.value;
-            gradeMap = GRADING_SYSTEMS[currentGrading] || GRADE_POINTS;
+            gradeMap = GRADING_SYSTEMS[currentGrading] || GRADING_SYSTEMS['Bangladesh (5.00 Scale)'];
             renderSemesters();
             updateCharts();
             saveState();
@@ -394,18 +416,17 @@
 
         function setCreditMode(mode) {
             creditMode = mode;
-            document.getElementById('equal-btn').className = `flex-1 py-4 rounded-2xl border-2 font-medium transition-all ${mode==='equal' ? 'border-[#d95a3a] text-[#d95a3a]' : 'border-[#4a322a] text-[#b08a7a]'}`;
-            document.getElementById('variable-btn').className = `flex-1 py-4 rounded-2xl border-2 font-medium transition-all ${mode==='variable' ? 'border-[#d95a3a] text-[#d95a3a]' : 'border-[#4a322a] text-[#b08a7a]'}`;
+            document.getElementById('equal-btn').className = `flex-1 py-4 rounded-2xl border-2 font-medium transition-all ${mode==='equal' ? 'border-blue-500 text-blue-600' : 'border-gray-300 dark:border-gray-600'}`;
+            document.getElementById('variable-btn').className = `flex-1 py-4 rounded-2xl border-2 font-medium transition-all ${mode==='variable' ? 'border-blue-500 text-blue-600' : 'border-gray-300 dark:border-gray-600'}`;
             renderSemesters();
             updateCharts();
             saveState();
         }
 
-        // --------------------------------------------------------------
-        // 7. CHARTS (Chart.js)
-        // --------------------------------------------------------------
+        // ============================================================
+        // CHARTS
+        // ============================================================
         function updateCharts() {
-            // pie: grade distribution (all courses)
             const gradeCount = {};
             semesters.forEach(sem => {
                 (sem.courses || []).forEach(c => {
@@ -415,34 +436,34 @@
             });
             const labels = Object.keys(gradeCount);
             const data = Object.values(gradeCount);
-            const colors = ['#d95a3a','#e68a6f','#f09a7a','#b08a7a','#7a5a4a','#4a322a','#2a201c'];
+            const colors = ['#3b82f6','#8b5cf6','#ec4899','#f59e0b','#10b981','#ef4444','#6366f1','#14b8a6','#f97316','#8b5cf6'];
 
             const pieCtx = document.getElementById('pieChart');
             if (pieCtx) {
                 if (pieChartInstance) pieChartInstance.destroy();
                 pieChartInstance = new Chart(pieCtx, {
                     type: 'pie',
-                    data: { labels, datasets: [{ data, backgroundColor: colors.slice(0, labels.length), borderColor: '#1e1614', borderWidth: 2 }] },
-                    options: { responsive: true, plugins: { legend: { labels: { color: '#b08a7a' } } } }
+                    data: { labels, datasets: [{ data, backgroundColor: colors.slice(0, labels.length), borderColor: '#fff', borderWidth: 2 }] },
+                    options: { responsive: true }
                 });
             }
 
-            // line: GPA per semester
             const lineCtx = document.getElementById('lineChart');
             if (lineCtx) {
                 if (lineChartInstance) lineChartInstance.destroy();
                 const semGpas = semesters.map(sem => calculateGPA(sem.courses));
+                const maxGPA = Math.max(4.5, ...semGpas.map(g => g + 0.5));
                 lineChartInstance = new Chart(lineCtx, {
                     type: 'line',
-                    data: { labels: semesters.map((_,i) => `Sem ${i+1}`), datasets: [{ label: 'GPA', data: semGpas, borderColor: '#d95a3a', backgroundColor: '#d95a3a20', fill: true, tension: 0.3 }] },
-                    options: { responsive: true, plugins: { legend: { labels: { color: '#b08a7a' } } }, scales: { y: { min: 0, max: 4.5, grid: { color: '#4a322a' } }, x: { grid: { color: '#4a322a' } } } }
+                    data: { labels: semesters.map((_,i) => `Sem ${i+1}`), datasets: [{ label: 'GPA', data: semGpas, borderColor: '#3b82f6', backgroundColor: '#3b82f620', fill: true, tension: 0.3 }] },
+                    options: { responsive: true, scales: { y: { min: 0, max: Math.ceil(maxGPA) } } }
                 });
             }
         }
 
-        // --------------------------------------------------------------
-        // 8. TABS
-        // --------------------------------------------------------------
+        // ============================================================
+        // TABS
+        // ============================================================
         function showTab(idx) {
             document.querySelectorAll('.tab-content').forEach((el, i) => {
                 el.classList.toggle('hidden', i !== idx);
@@ -453,62 +474,54 @@
             if (idx === 1) setTimeout(updateCharts, 100);
         }
 
-        // --------------------------------------------------------------
-        // 9. EXPORT PDF (mock)
-        // --------------------------------------------------------------
+        // ============================================================
+        // MISC
+        // ============================================================
         function exportToPDF() {
-            showToast('PDF export ready (simulated)');
+            showToast('PDF export ready');
         }
 
-        // --------------------------------------------------------------
-        // 10. THEME TOGGLE (mars dark only)
-        // --------------------------------------------------------------
         function toggleTheme() {
-            showToast('Mars theme stays dark 🚀');
+            document.body.classList.toggle('dark');
+            const icon = document.querySelector('#theme-toggle i');
+            if (document.body.classList.contains('dark')) {
+                icon.className = 'fas fa-sun text-xl';
+            } else {
+                icon.className = 'fas fa-moon text-xl';
+            }
         }
 
-        // --------------------------------------------------------------
-        // 11. TOAST
-        // --------------------------------------------------------------
         function showToast(msg) {
             const t = document.getElementById('toast');
-            t.innerHTML = `<i class="fas fa-asterisk text-[#d95a3a]"></i> ${msg}`;
+            t.innerHTML = `<i class="fas fa-info-circle"></i> ${msg}`;
             t.classList.remove('hidden');
             clearTimeout(t._hide);
             t._hide = setTimeout(() => t.classList.add('hidden'), 2500);
         }
 
-        // --------------------------------------------------------------
-        // 12. INIT
-        // --------------------------------------------------------------
+        // ============================================================
+        // INIT
+        // ============================================================
         function init() {
-            // populate grading select
             const sel = document.getElementById('grading-system');
             sel.innerHTML = Object.keys(GRADING_SYSTEMS).map(k => `<option value="${k}">${k}</option>`).join('');
             sel.value = currentGrading;
 
-            // load state
             const loaded = loadState();
             if (!loaded) {
-                // default semesters
                 semesters = [
                     { id: semesterCounter++, name: 'Fall 2025', courses: [{ name: 'Math', grade: 'A', credit: 3 }, { name: 'Physics', grade: 'B+', credit: 3 }] },
                     { id: semesterCounter++, name: 'Spring 2026', courses: [{ name: 'Chemistry', grade: 'A-', credit: 3 }, { name: 'Biology', grade: 'B', credit: 3 }] }
                 ];
             }
-            // ensure each course has credit
             semesters.forEach(sem => {
                 (sem.courses || []).forEach(c => { if (c.credit === undefined) c.credit = 1; });
             });
 
-            // set credit mode buttons
             setCreditMode(creditMode);
-
-            // render
             renderSemesters();
             updateCharts();
 
-            // sortable (drag reorder) using Sortable
             const container = document.getElementById('semesters-container');
             if (container) {
                 Sortable.create(container, {
@@ -524,18 +537,10 @@
                 });
             }
 
-            // sync grading select
             sel.addEventListener('change', changeGradingSystem);
-
-            // recalc on any input (delegation)
-            document.addEventListener('change', function(e) {
-                if (e.target.closest('.course-row') || e.target.closest('select')) {
-                    // already handled via events
-                }
-            });
         }
 
-        // make functions globally accessible
+        // Make functions global
         window.addSemester = addSemester;
         window.removeSemester = removeSemester;
         window.addCourse = addCourse;
@@ -546,7 +551,6 @@
         window.exportToPDF = exportToPDF;
         window.toggleTheme = toggleTheme;
 
-        // start
         init();
     </script>
 </body>

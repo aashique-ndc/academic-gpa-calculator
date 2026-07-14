@@ -1,6 +1,6 @@
 // assets/js/app.js
 import { gradingSystems } from './gradingData.js';
-import { convertCGPA, convertGrade, convertCourseGrade } from './converter.js';
+import { convertCGPA, convertGrade, convertCourseGrade, calculateGPA } from './converter.js';
 
 let semesters = [];
 let currentGradingSystem = 'bd5';
@@ -11,6 +11,7 @@ let semesterCounter = 0;
 window.convertCGPA = convertCGPA;
 window.convertGrade = convertGrade;
 window.convertCourseGrade = convertCourseGrade;
+window.calculateGPA = calculateGPA;
 window.gradingSystems = gradingSystems;
 
 function init() {
@@ -47,8 +48,8 @@ function changeGradingSystem() {
 
 function setCreditMode(mode) {
     creditMode = mode;
-    document.getElementById('equal-btn').className = `flex-1 py-4 rounded-2xl border-2 font-medium transition-all ${mode === 'equal' ? 'border-blue-500 text-blue-600' : 'border-gray-300'}`;
-    document.getElementById('variable-btn').className = `flex-1 py-4 rounded-2xl border-2 font-medium transition-all ${mode === 'variable' ? 'border-blue-500 text-blue-600' : 'border-gray-300'}`;
+    document.getElementById('equal-btn').className = `flex-1 py-4 rounded-2xl border-2 font-medium transition-all ${mode === 'equal' ? 'border-blue-500 text-blue-600' : 'border-gray-300 dark:border-gray-600'}`;
+    document.getElementById('variable-btn').className = `flex-1 py-4 rounded-2xl border-2 font-medium transition-all ${mode === 'variable' ? 'border-blue-500 text-blue-600' : 'border-gray-300 dark:border-gray-600'}`;
     renderSemesters();
     saveState();
 }
@@ -247,9 +248,24 @@ function convertResult() {
     
     const convertedCGPA = convertCGPA(cgpa, currentGradingSystem, targetSystem, allCourses);
     
+    // Show detailed conversion info
+    const fromScale = gradingSystems[currentGradingSystem];
+    const toScale = gradingSystems[targetSystem];
+    
+    let detailsHTML = '';
+    allCourses.forEach((course, i) => {
+        const converted = convertCourseGrade(course.grade, currentGradingSystem, targetSystem, course.credit || 1);
+        detailsHTML += `
+            <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                Course ${i+1}: ${course.grade} (${converted.percentage}%) → ${converted.convertedGrade}
+            </div>
+        `;
+    });
+    
     document.getElementById('converted-cgpa').textContent = convertedCGPA.toFixed(2);
     document.getElementById('target-scale-name').textContent = gradingSystems[targetSystem].name;
     document.getElementById('conversion-result').classList.remove('hidden');
+    document.getElementById('conversion-details').innerHTML = detailsHTML;
     
     showToast(`Converted to ${gradingSystems[targetSystem].name}: ${convertedCGPA.toFixed(2)}`);
 }

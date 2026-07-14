@@ -184,6 +184,7 @@
                         <input id="student-institution" type="text" placeholder="Institution" class="w-full px-4 py-3 rounded-2xl border border-[#4a322a] focus:outline-none focus:border-[#d95a3a] bg-[#1e1614] text-[#eee5de]">
                         <input id="student-board" type="text" placeholder="Board" class="w-full px-4 py-3 rounded-2xl border border-[#4a322a] focus:outline-none focus:border-[#d95a3a] bg-[#1e1614] text-[#eee5de]">
                         <input id="student-subject" type="text" placeholder="Subject/Group" class="w-full px-4 py-3 rounded-2xl border border-[#4a322a] focus:outline-none focus:border-[#d95a3a] bg-[#1e1614] text-[#eee5de]">
+                        <input id="student-session" type="text" placeholder="Session (e.g., 2022-2023)" class="w-full px-4 py-3 rounded-2xl border border-[#4a322a] focus:outline-none focus:border-[#d95a3a] bg-[#1e1614] text-[#eee5de]">
                         <div class="grid grid-cols-2 gap-3">
                             <input id="student-roll" type="text" placeholder="Roll" class="w-full px-4 py-3 rounded-2xl border border-[#4a322a] focus:outline-none focus:border-[#d95a3a] bg-[#1e1614] text-[#eee5de]">
                             <input id="student-registration" type="text" placeholder="Registration" class="w-full px-4 py-3 rounded-2xl border border-[#4a322a] focus:outline-none focus:border-[#d95a3a] bg-[#1e1614] text-[#eee5de]">
@@ -833,9 +834,10 @@
     }
 
     // ============================================================
-    // EXPORT
+    // TRANSCRIPT GENERATOR (UPDATED - Clean Transcript)
     // ============================================================
     function generateTranscriptHTML() {
+        // Get student info
         const studentName = document.getElementById('student-name')?.value || 'Not Provided';
         const institution = document.getElementById('student-institution')?.value || '';
         const board = document.getElementById('student-board')?.value || '';
@@ -844,97 +846,131 @@
         const registration = document.getElementById('student-registration')?.value || '';
         const examName = document.getElementById('student-exam-name')?.value || '';
         const examYear = document.getElementById('student-exam-year')?.value || '';
+        const session = document.getElementById('student-session')?.value || '';
+        
+        // Get academic data
         const cgpa = calculateCGPA();
         const totalCredits = totalCreditsAll();
         const fromScale = gradingSystems[currentGradingSystem];
         const scaleName = fromScale?.name || 'Unknown Scale';
+        
+        // Generate semester tables
         let semesterTables = '';
         semesters.forEach((sem, idx) => {
             const semGPA = calculateSemesterGPA(sem.courses);
             semesterTables += `
-                <div style="margin-bottom:18px;">
-                    <h3 style="font-size:14px;font-weight:bold;margin-bottom:6px;border-bottom:2px solid #b53b2c;padding-bottom:4px;color:#b53b2c;">
-                        ${sem.name} <span style="float:right;font-weight:normal;color:#333;font-size:13px;">GPA: ${semGPA.toFixed(2)}</span>
+                <div style="margin-bottom:15px;">
+                    <h3 style="font-size:13px;font-weight:bold;margin-bottom:4px;border-bottom:1px solid #ccc;padding-bottom:3px;color:#b53b2c;">
+                        ${sem.name} <span style="float:right;font-weight:normal;color:#333;font-size:12px;">GPA: ${semGPA.toFixed(2)}</span>
                     </h3>
-                    <table style="width:100%;border-collapse:collapse;font-size:11px;">
-                        <thead><tr style="background:#e5e7eb;">
-                            <th style="border:1px solid #9ca3af;padding:4px 6px;text-align:center;width:8%;">SL</th>
-                            <th style="border:1px solid #9ca3af;padding:4px 6px;text-align:left;">Course Name</th>
-                            <th style="border:1px solid #9ca3af;padding:4px 6px;text-align:center;width:12%;">Credit</th>
-                            <th style="border:1px solid #9ca3af;padding:4px 6px;text-align:center;width:10%;">Grade</th>
-                            <th style="border:1px solid #9ca3af;padding:4px 6px;text-align:center;width:14%;">Grade Point</th>
-                        </tr></thead>
-                        <tbody>${sem.courses.map((course, ci) => {
-                            const gradeData = fromScale?.grades?.find(g => g.letter === course.grade);
-                            const credit = creditMode === 'equal' ? 1 : (course.credit || 3);
-                            const point = gradeData?.point !== undefined ? gradeData.point.toFixed(2) : 'N/A';
-                            return `<tr style="${ci % 2 === 0 ? 'background:#ffffff;' : 'background:#f9fafb;'}">
-                                <td style="border:1px solid #9ca3af;padding:4px 6px;text-align:center;">${ci + 1}</td>
-                                <td style="border:1px solid #9ca3af;padding:4px 6px;">${course.name}</td>
-                                <td style="border:1px solid #9ca3af;padding:4px 6px;text-align:center;">${credit}</td>
-                                <td style="border:1px solid #9ca3af;padding:4px 6px;text-align:center;font-weight:600;">${course.grade}</td>
-                                <td style="border:1px solid #9ca3af;padding:4px 6px;text-align:center;">${point}</td>
-                            </tr>`;
-                        }).join('')}</tbody>
+                    <table style="width:100%;border-collapse:collapse;font-size:10px;">
+                        <thead>
+                            <tr style="background:#f0f0f0;">
+                                <th style="border:1px solid #999;padding:3px 5px;text-align:center;width:6%;">SL</th>
+                                <th style="border:1px solid #999;padding:3px 5px;text-align:left;">Course Name</th>
+                                <th style="border:1px solid #999;padding:3px 5px;text-align:center;width:10%;">Credit</th>
+                                <th style="border:1px solid #999;padding:3px 5px;text-align:center;width:10%;">Grade</th>
+                                <th style="border:1px solid #999;padding:3px 5px;text-align:center;width:12%;">Grade Point</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${sem.courses.map((course, ci) => {
+                                const gradeData = fromScale?.grades?.find(g => g.letter === course.grade);
+                                const credit = creditMode === 'equal' ? 1 : (course.credit || 3);
+                                const point = gradeData?.point !== undefined ? gradeData.point.toFixed(2) : 'N/A';
+                                return `
+                                    <tr style="${ci % 2 === 0 ? 'background:#ffffff;' : 'background:#f9fafb;'}">
+                                        <td style="border:1px solid #999;padding:3px 5px;text-align:center;">${ci + 1}</td>
+                                        <td style="border:1px solid #999;padding:3px 5px;">${course.name}</td>
+                                        <td style="border:1px solid #999;padding:3px 5px;text-align:center;">${credit}</td>
+                                        <td style="border:1px solid #999;padding:3px 5px;text-align:center;font-weight:600;">${course.grade}</td>
+                                        <td style="border:1px solid #999;padding:3px 5px;text-align:center;">${point}</td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
                     </table>
                 </div>
             `;
         });
-        let gradeScaleHTML = '';
-        if (fromScale?.grades?.length > 0) {
-            gradeScaleHTML = `
-                <div style="margin-top:15px;padding:10px 12px;background:#f9fafb;border:1px solid #d1d5db;border-radius:6px;">
-                    <h4 style="font-size:12px;font-weight:bold;margin-bottom:6px;color:#b53b2c;">Grading Scale: ${scaleName}</h4>
-                    <table style="width:100%;border-collapse:collapse;font-size:10px;">
-                        <thead><tr style="background:#e5e7eb;">
-                            <th style="border:1px solid #9ca3af;padding:3px 5px;text-align:center;">Grade</th>
-                            <th style="border:1px solid #9ca3af;padding:3px 5px;text-align:center;">Grade Point</th>
-                            <th style="border:1px solid #9ca3af;padding:3px 5px;text-align:center;">Percentage Range</th>
-                        </tr></thead>
-                        <tbody>${fromScale.grades.map(g => `
-                            <tr style="${g.point === 0 ? 'background:#fee2e2;' : ''}">
-                                <td style="border:1px solid #9ca3af;padding:3px 5px;text-align:center;font-weight:600;">${g.letter}</td>
-                                <td style="border:1px solid #9ca3af;padding:3px 5px;text-align:center;">${g.point.toFixed(2)}</td>
-                                <td style="border:1px solid #9ca3af;padding:3px 5px;text-align:center;">${g.minPercent}% - ${g.maxPercent}%</td>
-                            </tr>
-                        `).join('')}</tbody>
-                    </table>
-                </div>
-            `;
-        }
+
+        // Build transcript HTML (Clean version - NO grade scale table)
         return `
-            <div style="font-family:'Inter',Arial,sans-serif;max-width:170mm;margin:0 auto;padding:10px 0;">
-                <div style="text-align:center;border-bottom:3px double #b53b2c;padding-bottom:12px;margin-bottom:15px;">
-                    <h1 style="font-size:22px;font-weight:bold;margin:0;color:#b53b2c;letter-spacing:2px;">ACADEMIC TRANSCRIPT</h1>
-                    <p style="font-size:11px;color:#666;margin:4px 0;">Generated by MarsCal v2.0 | ${new Date().toLocaleDateString()}</p>
+            <div style="font-family:'Times New Roman',serif;max-width:170mm;margin:0 auto;padding:8mm;border:3px double #b53b2c;border-radius:4px;background:white;color:black;">
+                
+                <!-- Top: Board and Transcript Title -->
+                <div style="text-align:center;border-bottom:2px solid #b53b2c;padding-bottom:6px;margin-bottom:10px;">
+                    <div style="font-size:16px;font-weight:bold;color:#b53b2c;">${board || 'BOARD OF INTERMEDIATE AND SECONDARY EDUCATION'}</div>
+                    <div style="font-size:14px;font-weight:bold;color:#b53b2c;">${institution || 'INSTITUTION NAME'}</div>
+                    <div style="font-size:13px;font-weight:bold;margin-top:2px;">ACADEMIC TRANSCRIPT</div>
+                    <div style="font-size:11px;color:#555;margin-top:2px;">${examName || 'Examination'} - ${examYear || 'Year'}</div>
                 </div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 30px;margin-bottom:15px;border:1px solid #d1d5db;padding:12px 15px;border-radius:6px;background:#f9fafb;font-size:12px;">
-                    <div><strong>Student Name:</strong> ${studentName}</div>
+                
+                <!-- Right: Grade Scale Box -->
+                <div style="float:right;width:auto;margin-left:10px;margin-bottom:8px;border:1px solid #b53b2c;padding:4px 8px;font-size:9px;background:#fdf6f3;">
+                    <div style="font-weight:bold;text-align:center;color:#b53b2c;font-size:10px;">Grading Scale</div>
+                    <table style="border-collapse:collapse;font-size:8px;">
+                        <thead>
+                            <tr><th style="border:1px solid #ccc;padding:1px 4px;">Grade</th><th style="border:1px solid #ccc;padding:1px 4px;">% Range</th><th style="border:1px solid #ccc;padding:1px 4px;">Point</th></tr>
+                        </thead>
+                        <tbody>
+                            ${fromScale?.grades?.map(g => `
+                                <tr><td style="border:1px solid #ccc;padding:1px 4px;">${g.letter}</td><td style="border:1px solid #ccc;padding:1px 4px;">${g.minPercent}-${g.maxPercent}</td><td style="border:1px solid #ccc;padding:1px 4px;">${g.point}</td></tr>
+                            `).join('') || ''}
+                        </tbody>
+                    </table>
+                    <div style="text-align:center;font-size:7px;color:#777;margin-top:2px;">Scale: ${scaleName}</div>
+                </div>
+                
+                <!-- Student Info -->
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px 20px;margin-bottom:8px;font-size:11px;border:1px solid #ddd;padding:6px 10px;border-radius:3px;background:#fafafa;">
+                    <div><strong>Name:</strong> ${studentName}</div>
                     <div><strong>Roll:</strong> ${roll}</div>
                     <div><strong>Registration:</strong> ${registration}</div>
-                    <div><strong>Subject/Group:</strong> ${subject}</div>
+                    <div><strong>Group/Subject:</strong> ${subject}</div>
                     <div><strong>Institution:</strong> ${institution}</div>
                     <div><strong>Board:</strong> ${board}</div>
-                    <div><strong>Examination:</strong> ${examName}</div>
-                    <div><strong>Year:</strong> ${examYear}</div>
+                    <div><strong>Session:</strong> ${session}</div>
+                    <div><strong>Exam:</strong> ${examName} - ${examYear}</div>
                 </div>
-                <div style="margin-bottom:12px;"><h3 style="font-size:13px;font-weight:bold;margin:0 0 4px 0;color:#b53b2c;">Grading System: ${scaleName}</h3></div>
-                <div style="margin-bottom:15px;">${semesterTables}</div>
-                <div style="background:#eff6ff;border:2px solid #b53b2c;border-radius:6px;padding:12px 15px;margin:15px 0;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;text-align:center;">
-                    <div><div style="font-size:11px;color:#4b5563;font-weight:500;">CGPA</div><div style="font-size:22px;font-weight:bold;color:#b53b2c;">${cgpa.toFixed(2)}</div></div>
-                    <div><div style="font-size:11px;color:#4b5563;font-weight:500;">Total Credits</div><div style="font-size:22px;font-weight:bold;color:#b53b2c;">${totalCredits}</div></div>
-                    <div><div style="font-size:11px;color:#4b5563;font-weight:500;">Total Semesters</div><div style="font-size:22px;font-weight:bold;color:#b53b2c;">${semesters.length}</div></div>
+                
+                <!-- Semester Results -->
+                <div style="margin-bottom:8px;">
+                    ${semesterTables}
                 </div>
-                ${gradeScaleHTML}
-                <div style="margin-top:25px;padding-top:20px;border-top:2px solid #b53b2c;display:grid;grid-template-columns:1fr 1fr;gap:40px;">
-                    <div style="text-align:center;"><div style="border-bottom:1px solid #333;padding-bottom:30px;margin-bottom:4px;">&nbsp;</div><div style="font-size:11px;font-weight:600;">Controller of Examinations</div><div style="font-size:10px;color:#6b7280;">Signature & Date</div></div>
-                    <div style="text-align:center;"><div style="border-bottom:1px solid #333;padding-bottom:30px;margin-bottom:4px;">&nbsp;</div><div style="font-size:11px;font-weight:600;">Head of Department / Principal</div><div style="font-size:10px;color:#6b7280;">Signature & Date</div></div>
+                
+                <!-- Summary: CGPA & Total Credits -->
+                <div style="background:#f0f0f0;border:1px solid #b53b2c;border-radius:3px;padding:6px 10px;margin:6px 0;display:flex;justify-content:space-around;text-align:center;">
+                    <div><span style="font-weight:bold;font-size:12px;">CGPA:</span> <span style="font-weight:bold;font-size:14px;color:#b53b2c;">${cgpa.toFixed(2)}</span></div>
+                    <div><span style="font-weight:bold;font-size:12px;">Total Credits:</span> <span style="font-weight:bold;font-size:14px;color:#b53b2c;">${totalCredits}</span></div>
+                    <div><span style="font-weight:bold;font-size:12px;">Semesters:</span> <span style="font-weight:bold;font-size:14px;color:#b53b2c;">${semesters.length}</span></div>
                 </div>
-                <div style="text-align:center;font-size:9px;color:#9ca3af;margin-top:18px;border-top:1px solid #e5e7eb;padding-top:10px;">This is a computer-generated transcript. | Generated on: ${new Date().toLocaleString()}</div>
+                
+                <!-- Signatures -->
+                <div style="margin-top:18px;padding-top:12px;border-top:2px solid #b53b2c;display:grid;grid-template-columns:1fr 1fr;gap:30px;">
+                    <div style="text-align:center;">
+                        <div style="border-bottom:1px solid #333;padding-bottom:20px;margin-bottom:3px;">&nbsp;</div>
+                        <div style="font-size:10px;font-weight:bold;">Controller of Examinations</div>
+                        <div style="font-size:9px;color:#666;">Signature & Date</div>
+                    </div>
+                    <div style="text-align:center;">
+                        <div style="border-bottom:1px solid #333;padding-bottom:20px;margin-bottom:3px;">&nbsp;</div>
+                        <div style="font-size:10px;font-weight:bold;">Head of Department / Principal</div>
+                        <div style="font-size:9px;color:#666;">Signature & Date</div>
+                    </div>
+                </div>
+                
+                <!-- Footer -->
+                <div style="text-align:center;font-size:8px;color:#999;margin-top:12px;border-top:1px solid #ddd;padding-top:6px;">
+                    Generated by MarsCal | ${new Date().toLocaleDateString()}
+                </div>
             </div>
         `;
     }
 
+    // ============================================================
+    // EXPORT FUNCTIONS
+    // ============================================================
     function exportToPDF() {
         showToast('Generating transcript...');
         if (typeof html2canvas === 'undefined' || typeof window.jspdf === 'undefined') {
@@ -946,7 +982,7 @@
             const transcriptHTML = generateTranscriptHTML();
             const container = document.createElement('div');
             container.id = 'transcript-container';
-            container.style.cssText = 'position:fixed;left:-9999px;top:0;width:210mm;padding:15mm;background:white;color:black;font-family:Inter,Arial,sans-serif;z-index:9999;';
+            container.style.cssText = 'position:fixed;left:-9999px;top:0;width:210mm;padding:5mm;background:white;color:black;font-family:Times New Roman,serif;z-index:9999;';
             container.innerHTML = transcriptHTML;
             document.body.appendChild(container);
             const { jsPDF } = window.jspdf;
@@ -1011,7 +1047,8 @@
                 roll: document.getElementById('student-roll')?.value || '',
                 registration: document.getElementById('student-registration')?.value || '',
                 examName: document.getElementById('student-exam-name')?.value || '',
-                examYear: document.getElementById('student-exam-year')?.value || ''
+                examYear: document.getElementById('student-exam-year')?.value || '',
+                session: document.getElementById('student-session')?.value || ''
             };
             localStorage.setItem('marsCalState', JSON.stringify({ semesters, creditMode, currentGradingSystem, studentInfo }));
         } catch(e) {}

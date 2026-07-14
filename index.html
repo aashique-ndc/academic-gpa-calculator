@@ -3,146 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MarsCal - GPA, SGPA & CGPA Calculator</title>
+    <title>Marscal - GPA, SGPA & CGPA Calculator</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <link rel="stylesheet" href="assets/css/style.css">
-    <link rel="stylesheet" href="assets/css/themes.css">
-    <link rel="stylesheet" href="assets/css/print.css">
-    <link rel="stylesheet" href="assets/css/animations.css">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        body { font-family: 'Inter', system-ui, sans-serif; }
-    </style>
 </head>
-<body class="bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 min-h-screen transition-colors">
+<body class="bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 min-h-screen">
     <div class="max-w-7xl mx-auto">
         <!-- Header -->
-        <header class="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border-b border-gray-200 dark:border-gray-700">
-            <div class="px-6 py-5 flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <div class="w-11 h-11 bg-gradient-to-br from-blue-600 to-violet-600 rounded-2xl flex items-center justify-center text-white font-bold text-3xl shadow-lg">A</div>
-                    <div>
-                        <h1 class="text-3xl font-bold tracking-tight">MarsCal</h1>
-                        <p class="text-sm text-gray-500 dark:text-gray-400 -mt-1">Academic Performance Calculator</p>
-                    </div>
-                </div>
+        <header class="sticky top-0 bg-white dark:bg-gray-900 shadow-md z-50">
+            <div class="px-8 py-6 flex justify-between items-center">
                 <div class="flex items-center gap-4">
-                    <button onclick="toggleTheme()" id="theme-toggle" 
-                            class="p-3 rounded-2xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-all">
-                        <i class="fas fa-moon text-xl"></i>
-                    </button>
-                    <button onclick="exportToPDF()" 
-                            class="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-medium transition-all shadow-md">
-                        <i class="fas fa-download"></i>
-                        <span>Export PDF</span>
-                    </button>
+                    <div class="text-4xl font-bold text-blue-600">M</div>
+                    <h1 class="text-3xl font-bold">Marscal</h1>
                 </div>
+                <button onclick="toggleTheme()" class="text-2xl p-3">
+                    <i class="fas fa-moon"></i>
+                </button>
             </div>
         </header>
 
         <div class="flex flex-col lg:flex-row">
             <!-- Sidebar -->
-            <div class="lg:w-96 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 p-6 lg:min-h-screen overflow-auto">
-                <!-- Student Info -->
-                <div class="mb-8">
-                    <h2 class="text-lg font-semibold mb-4 flex items-center gap-2"><i class="fas fa-user-circle"></i> Student Information</h2>
-                    <div class="space-y-4">
-                        <input id="student-name" type="text" placeholder="Full Name" 
-                               class="w-full px-4 py-3 rounded-2xl border border-gray-200 dark:border-gray-700 focus:outline-none focus:border-blue-500 bg-white dark:bg-gray-800">
-                        <!-- আরও ফিল্ড যোগ করা যাবে -->
-                    </div>
-                </div>
+            <div class="lg:w-96 bg-white dark:bg-gray-900 p-8 border-r">
+                <h2 class="text-xl font-semibold mb-6">Grading System</h2>
+                <select id="grading-system" onchange="changeGradingSystem()" 
+                        class="w-full p-4 border rounded-2xl text-lg mb-8">
+                </select>
 
-                <!-- Grading System -->
-                <div class="mb-8">
-                    <h2 class="text-lg font-semibold mb-4 flex items-center gap-2"><i class="fas fa-graduation-cap"></i> Grading System</h2>
-                    <select id="grading-system" onchange="changeGradingSystem()" 
-                            class="w-full px-4 py-3 rounded-2xl border border-gray-200 dark:border-gray-700 focus:outline-none bg-white dark:bg-gray-800">
-                    </select>
-                </div>
-
-                <!-- Credit Mode -->
-                <div>
-                    <h2 class="text-lg font-semibold mb-4">Credit System</h2>
-                    <div class="flex gap-3">
-                        <button onclick="setCreditMode('equal')" id="equal-btn"
-                                class="flex-1 py-4 rounded-2xl border-2 font-medium transition-all">Equal Credit</button>
-                        <button onclick="setCreditMode('variable')" id="variable-btn"
-                                class="flex-1 py-4 rounded-2xl border-2 font-medium transition-all">Variable Credit</button>
-                    </div>
+                <h2 class="text-xl font-semibold mb-6">Credit System</h2>
+                <div class="flex gap-4">
+                    <button onclick="setCreditMode('equal')" 
+                            class="flex-1 py-5 border-2 rounded-3xl font-medium">Equal Credit</button>
+                    <button onclick="setCreditMode('variable')" 
+                            class="flex-1 py-5 border-2 rounded-3xl font-medium">Variable Credit</button>
                 </div>
             </div>
 
-            <!-- Main Content -->
-            <div class="flex-1 p-6 lg:p-8">
-                <!-- Tabs -->
-                <div class="flex border-b border-gray-200 dark:border-gray-700 mb-8">
-                    <button onclick="showTab(0)" class="tab-btn active px-8 py-4 font-semibold">Semesters</button>
-                    <button onclick="showTab(1)" class="tab-btn px-8 py-4 font-semibold">Charts</button>
-                    <button onclick="showTab(2)" class="tab-btn px-8 py-4 font-semibold">Convert</button>
-                </div>
+            <!-- Main Area -->
+            <div class="flex-1 p-8">
+                <button onclick="addSemester()" 
+                        class="w-full py-6 bg-blue-600 hover:bg-blue-700 text-white text-xl font-medium rounded-3xl mb-10 flex items-center justify-center gap-3">
+                    <i class="fas fa-plus"></i> Add New Semester
+                </button>
 
-                <!-- Semesters Tab -->
-                <div id="tab-0" class="tab-content">
-                    <div id="semesters-container" class="space-y-8"></div>
-                    <button onclick="addSemester()" 
-                            class="mt-8 w-full py-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-3xl text-gray-500 hover:text-blue-600 hover:border-blue-300 flex items-center justify-center gap-3 text-lg">
-                        <i class="fas fa-plus"></i> Add New Semester
-                    </button>
-                </div>
-
-                <!-- Charts Tab -->
-                <div id="tab-1" class="tab-content hidden">
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <div class="bg-white dark:bg-gray-900 rounded-3xl p-6 shadow-sm">
-                            <h3 class="font-semibold mb-4">Grade Distribution</h3>
-                            <canvas id="pieChart" height="300"></canvas>
-                        </div>
-                        <div class="bg-white dark:bg-gray-900 rounded-3xl p-6 shadow-sm">
-                            <h3 class="font-semibold mb-4">GPA Trend</h3>
-                            <canvas id="lineChart" height="300"></canvas>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Convert Tab -->
-                <div id="tab-2" class="tab-content hidden">
-                    <div class="bg-white dark:bg-gray-900 rounded-3xl p-8">
-                        <h3 class="font-semibold mb-6">Result Conversion</h3>
-                        <p class="text-gray-500">Select target grading system to convert</p>
-                        <!-- Conversion UI এখানে যোগ হবে -->
-                    </div>
-                </div>
-
-                <!-- Summary Card -->
-                <div class="mt-12 bg-gradient-to-br from-blue-500 to-violet-600 text-white rounded-3xl p-8 shadow-xl">
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-                        <div>
-                            <div id="cgpa-display" class="text-5xl font-bold">0.00</div>
-                            <div class="text-sm opacity-75">CGPA</div>
-                        </div>
-                        <div>
-                            <div id="total-credits" class="text-5xl font-bold">0</div>
-                            <div class="text-sm opacity-75">Total Credits</div>
-                        </div>
-                    </div>
-                </div>
+                <div id="semesters-container" class="space-y-8"></div>
             </div>
         </div>
     </div>
 
-    <!-- Toast -->
-    <div id="toast" class="hidden fixed bottom-4 right-4 bg-gray-800 text-white px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3"></div>
-
-    <script src="assets/js/constants.js"></script>
-    <script src="assets/js/gradingData.js"></script>
-    <script src="assets/js/utils.js"></script>
-    <script src="assets/js/storage.js"></script>
-    <script src="assets/js/calculator.js"></script>
-    <script src="assets/js/ui.js"></script>
     <script src="assets/js/app.js"></script>
 </body>
 </html>

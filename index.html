@@ -174,9 +174,112 @@
         document.addEventListener('DOMContentLoaded', function() {
             console.log('MarsCal loaded successfully');
             
-            // Initialize if app.js didn't
+            // Check if converter.js loaded
+            if (typeof convertCGPA === 'undefined' && typeof convertResult === 'undefined') {
+                console.warn('converter.js not loaded, using fallback converter');
+                
+                // Define converter functions
+                window.convertCGPA = function(cgpa, fromSystem, toSystem) {
+                    const GRADING_SYSTEMS = {
+                        'Bangladesh (5.00 Scale)': {
+                            'A+': 5.00, 'A': 4.50, 'A-': 4.00,
+                            'B+': 3.50, 'B': 3.00, 'B-': 2.50,
+                            'C+': 2.00, 'C': 1.50, 'D': 1.00, 'F': 0.00
+                        },
+                        'Bangladesh (4.00 Scale)': {
+                            'A+': 4.00, 'A': 3.75, 'A-': 3.50,
+                            'B+': 3.25, 'B': 3.00, 'B-': 2.75,
+                            'C+': 2.50, 'C': 2.25, 'D': 2.00, 'F': 0.00
+                        },
+                        'India (10.00 Scale)': {
+                            'O': 10.0, 'A+': 9.0, 'A': 8.0,
+                            'B+': 7.0, 'B': 6.0, 'C': 5.0,
+                            'D': 4.0, 'F': 0.0
+                        },
+                        'Pakistan (4.00 Scale)': {
+                            'A+': 4.00, 'A': 3.70, 'A-': 3.30,
+                            'B+': 3.00, 'B': 2.70, 'B-': 2.30,
+                            'C+': 2.00, 'C': 1.70, 'C-': 1.30,
+                            'D': 1.00, 'F': 0.00
+                        },
+                        'United States (4.00 Scale)': {
+                            'A+': 4.00, 'A': 4.00, 'A-': 3.70,
+                            'B+': 3.30, 'B': 3.00, 'B-': 2.70,
+                            'C+': 2.30, 'C': 2.00, 'C-': 1.70,
+                            'D+': 1.30, 'D': 1.00, 'F': 0.00
+                        },
+                        'United Kingdom': {
+                            'First': 4.00, 'Upper Second': 3.50, 'Lower Second': 3.00,
+                            'Third': 2.00, 'Pass': 1.00, 'Fail': 0.00
+                        },
+                        'Europe (ECTS)': {
+                            'A': 5.00, 'B': 4.00, 'C': 3.00,
+                            'D': 2.00, 'E': 1.00, 'F': 0.00
+                        },
+                        'China (Common 4.00 Scale)': {
+                            'A+': 4.00, 'A': 3.70, 'A-': 3.30,
+                            'B+': 3.00, 'B': 2.70, 'B-': 2.30,
+                            'C+': 2.00, 'C': 1.70, 'C-': 1.30,
+                            'D+': 1.00, 'D': 0.70, 'F': 0.00
+                        },
+                        'South Korea (4.30 Scale)': {
+                            'A+': 4.30, 'A0': 4.00, 'A-': 3.70,
+                            'B+': 3.30, 'B0': 3.00, 'B-': 2.70,
+                            'C+': 2.30, 'C0': 2.00, 'C-': 1.70,
+                            'D+': 1.30, 'D0': 1.00, 'F': 0.00
+                        },
+                        'Malaysia (4.00 Scale)': {
+                            'A+': 4.00, 'A': 3.70, 'A-': 3.30,
+                            'B+': 3.00, 'B': 2.70, 'B-': 2.30,
+                            'C+': 2.00, 'C': 1.70, 'C-': 1.30,
+                            'D+': 1.00, 'D': 0.70, 'F': 0.00
+                        },
+                        'Custom Grading System': {
+                            'A+': 4.00, 'A': 3.70, 'A-': 3.30,
+                            'B+': 3.00, 'B': 2.70, 'B-': 2.30,
+                            'C+': 2.00, 'C': 1.70, 'C-': 1.30,
+                            'D+': 1.00, 'D': 0.70, 'F': 0.00
+                        }
+                    };
+
+                    const fromScale = GRADING_SYSTEMS[fromSystem];
+                    const toScale = GRADING_SYSTEMS[toSystem];
+                    
+                    if (!fromScale || !toScale) return cgpa;
+
+                    // Get all grade points
+                    const fromGrades = Object.values(fromScale);
+                    const toGrades = Object.values(toScale);
+                    
+                    // Find closest match in target scale
+                    let converted = 0;
+                    let minDiff = Infinity;
+                    
+                    toGrades.forEach(targetGp => {
+                        fromGrades.forEach(fromGp => {
+                            const diff = Math.abs(cgpa - fromGp);
+                            if (diff < minDiff) {
+                                minDiff = diff;
+                                converted = targetGp;
+                            }
+                        });
+                    });
+
+                    // If no match found (cgpa is 0), use proportional
+                    if (converted === 0 && cgpa > 0) {
+                        const fromMax = Math.max(...fromGrades);
+                        const toMax = Math.max(...toGrades);
+                        converted = (cgpa / fromMax) * toMax;
+                    }
+
+                    return Math.round(converted * 100) / 100;
+                };
+            }
+
+            // Check if app.js loaded
             if (typeof init === 'undefined') {
                 console.warn('app.js not loaded, using fallback init');
+                
                 // Basic grading systems
                 const GRADING_SYSTEMS = {
                     'Bangladesh (5.00 Scale)': {
@@ -421,45 +524,61 @@
                 }
 
                 // ============================================================
-                // CONVERSION - NUMBER BASED (Direct Value Mapping)
+                // CONVERSION - Using converter.js or fallback
                 // ============================================================
                 function convertResult() {
                     const currentCGPA = calculateCGPA();
                     const targetSystem = document.getElementById('convert-target').value;
-                    const targetScale = GRADING_SYSTEMS[targetSystem];
                     
-                    if (!targetScale) {
-                        showToast('Please select a valid grading system');
+                    if (!targetSystem) {
+                        showToast('Please select a target grading system');
                         return;
                     }
 
-                    // Get all grade points from both scales
-                    const currentGrades = Object.values(gradeMap);
-                    const targetGrades = Object.values(targetScale);
+                    let convertedCGPA;
                     
-                    // Find the closest matching grade point in target scale
-                    let convertedCGPA = 0;
-                    let minDifference = Infinity;
-                    
-                    // For each target grade point, find the closest current grade point
-                    targetGrades.forEach(targetGp => {
-                        currentGrades.forEach(currentGp => {
-                            const diff = Math.abs(currentCGPA - currentGp);
-                            if (diff < minDifference) {
-                                minDifference = diff;
-                                convertedCGPA = targetGp;
-                            }
-                        });
-                    });
-
-                    // If no match found, use proportional as fallback
-                    if (convertedCGPA === 0 && currentCGPA > 0) {
-                        const currentMax = Math.max(...currentGrades);
-                        const targetMax = Math.max(...targetGrades);
-                        convertedCGPA = (currentCGPA / currentMax) * targetMax;
+                    // Try to use converter.js if available
+                    if (typeof convertCGPA === 'function') {
+                        try {
+                            convertedCGPA = convertCGPA(currentCGPA, currentGrading, targetSystem);
+                        } catch(e) {
+                            console.warn('convertCGPA failed, using fallback', e);
+                            convertedCGPA = null;
+                        }
                     }
+                    
+                    // Fallback if converter.js not available or failed
+                    if (convertedCGPA === undefined || convertedCGPA === null) {
+                        const targetScale = GRADING_SYSTEMS[targetSystem];
+                        if (!targetScale) {
+                            showToast('Target grading system not found');
+                            return;
+                        }
 
-                    convertedCGPA = Math.round(convertedCGPA * 100) / 100;
+                        const fromGrades = Object.values(gradeMap);
+                        const toGrades = Object.values(targetScale);
+                        
+                        let converted = 0;
+                        let minDiff = Infinity;
+                        
+                        toGrades.forEach(targetGp => {
+                            fromGrades.forEach(fromGp => {
+                                const diff = Math.abs(currentCGPA - fromGp);
+                                if (diff < minDiff) {
+                                    minDiff = diff;
+                                    converted = targetGp;
+                                }
+                            });
+                        });
+
+                        if (converted === 0 && currentCGPA > 0) {
+                            const fromMax = Math.max(...fromGrades);
+                            const toMax = Math.max(...toGrades);
+                            converted = (currentCGPA / fromMax) * toMax;
+                        }
+
+                        convertedCGPA = Math.round(converted * 100) / 100;
+                    }
 
                     document.getElementById('converted-cgpa').textContent = convertedCGPA.toFixed(2);
                     document.getElementById('target-scale-name').textContent = targetSystem;

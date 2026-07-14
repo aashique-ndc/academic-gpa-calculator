@@ -114,6 +114,7 @@
                         <div class="space-y-6">
                             <div>
                                 <label class="block text-sm font-medium mb-2">Current CGPA: <span id="current-cgpa-display" class="font-bold text-blue-600">0.00</span></label>
+                                <label class="block text-sm font-medium mb-2">Current Scale: <span id="current-scale-display" class="font-medium">Bangladesh (5.00 Scale)</span></label>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium mb-2">Convert to:</label>
@@ -127,6 +128,7 @@
                             <div id="conversion-result" class="mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-2xl hidden">
                                 <p class="text-sm text-gray-600 dark:text-gray-400">Converted CGPA: <span id="converted-cgpa" class="font-bold text-lg text-blue-600"></span></p>
                                 <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Target Scale: <span id="target-scale-name" class="font-medium"></span></p>
+                                <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Conversion Method: <span class="font-medium">Direct Value Mapping</span></p>
                             </div>
                         </div>
                     </div>
@@ -373,6 +375,7 @@
                     document.getElementById('cgpa-display').textContent = cgpa.toFixed(2);
                     document.getElementById('total-credits').textContent = totalCreditsAll();
                     document.getElementById('current-cgpa-display').textContent = cgpa.toFixed(2);
+                    document.getElementById('current-scale-display').textContent = currentGrading;
                 }
 
                 function addSemester() {
@@ -406,6 +409,7 @@
                     renderSemesters();
                     saveState();
                     populateConvertTarget();
+                    updateSummary();
                 }
 
                 function setCreditMode(mode) {
@@ -416,6 +420,9 @@
                     saveState();
                 }
 
+                // ============================================================
+                // CONVERSION - NUMBER BASED (Direct Value Mapping)
+                // ============================================================
                 function convertResult() {
                     const currentCGPA = calculateCGPA();
                     const targetSystem = document.getElementById('convert-target').value;
@@ -426,11 +433,32 @@
                         return;
                     }
 
-                    const currentMax = Math.max(...Object.values(gradeMap));
-                    const targetMax = Math.max(...Object.values(targetScale));
+                    // Get all grade points from both scales
+                    const currentGrades = Object.values(gradeMap);
+                    const targetGrades = Object.values(targetScale);
                     
-                    let convertedCGPA = (currentCGPA / currentMax) * targetMax;
-                    convertedCGPA = Math.min(convertedCGPA, targetMax);
+                    // Find the closest matching grade point in target scale
+                    let convertedCGPA = 0;
+                    let minDifference = Infinity;
+                    
+                    // For each target grade point, find the closest current grade point
+                    targetGrades.forEach(targetGp => {
+                        currentGrades.forEach(currentGp => {
+                            const diff = Math.abs(currentCGPA - currentGp);
+                            if (diff < minDifference) {
+                                minDifference = diff;
+                                convertedCGPA = targetGp;
+                            }
+                        });
+                    });
+
+                    // If no match found, use proportional as fallback
+                    if (convertedCGPA === 0 && currentCGPA > 0) {
+                        const currentMax = Math.max(...currentGrades);
+                        const targetMax = Math.max(...targetGrades);
+                        convertedCGPA = (currentCGPA / currentMax) * targetMax;
+                    }
+
                     convertedCGPA = Math.round(convertedCGPA * 100) / 100;
 
                     document.getElementById('converted-cgpa').textContent = convertedCGPA.toFixed(2);
@@ -536,6 +564,7 @@
                     setCreditMode(creditMode);
                     renderSemesters();
                     populateConvertTarget();
+                    updateSummary();
 
                     const container = document.getElementById('semesters-container');
                     if (container && typeof Sortable !== 'undefined') {

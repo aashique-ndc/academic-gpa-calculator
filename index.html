@@ -256,6 +256,9 @@
                                 <select id="convert-target" class="w-full px-4 py-3 rounded-2xl border border-[#4a322a] focus:outline-none focus:border-[#d95a3a] bg-[#1e1614] text-[#eee5de]"></select>
                             </div>
                             <button onclick="convertResult()" class="w-full py-3 mars-gradient text-white rounded-2xl font-medium hover:opacity-90 transition mars-shadow">Convert Result</button>
+                            <button onclick="exportConvertedPDF()" class="w-full py-3 mt-3 bg-gradient-to-br from-[#b53b2c] to-[#7a2e1a] text-white rounded-2xl font-medium hover:opacity-90 transition mars-shadow">
+                                <i class="fas fa-file-pdf mr-2"></i> Export Converted PDF
+                            </button>
                             <div id="conversion-result" class="mt-4 p-4 bg-[#1e1614] border border-[#4a322a] rounded-2xl hidden">
                                 <p class="text-sm text-[#b08a7a]">Converted CGPA: <span id="converted-cgpa" class="font-bold text-lg text-[#d95a3a]"></span></p>
                                 <p class="text-sm text-[#b08a7a] mt-1">Target Scale: <span id="target-scale-name" class="font-medium text-[#eee5de]"></span></p>
@@ -834,9 +837,9 @@
     }
 
     // ============================================================
-    // TRANSCRIPT GENERATOR (UPDATED - Clean Transcript)
+    // TRANSCRIPT GENERATOR (UPDATED - Supports both original & converted)
     // ============================================================
-    function generateTranscriptHTML() {
+    function generateTranscriptHTML(useConverted = false, targetSystem = null) {
         // Get student info
         const studentName = document.getElementById('student-name')?.value || 'Not Provided';
         const institution = document.getElementById('student-institution')?.value || '';
@@ -848,15 +851,29 @@
         const examYear = document.getElementById('student-exam-year')?.value || '';
         const session = document.getElementById('student-session')?.value || '';
         
-        // Get academic data
-        const cgpa = calculateCGPA();
-        const totalCredits = totalCreditsAll();
-        const fromScale = gradingSystems[currentGradingSystem];
-        const scaleName = fromScale?.name || 'Unknown Scale';
+        // Get academic data - use converted if requested
+        let cgpa, totalCredits, fromScale, scaleName, semesterData;
+        
+        if (useConverted && targetSystem) {
+            // Use converted data
+            const convertedResult = getConvertedResult(targetSystem);
+            cgpa = convertedResult.cgpa;
+            totalCredits = convertedResult.totalCredits;
+            fromScale = gradingSystems[targetSystem];
+            scaleName = fromScale?.name || targetSystem;
+            semesterData = convertedResult.semesters;
+        } else {
+            // Use original data
+            cgpa = calculateCGPA();
+            totalCredits = totalCreditsAll();
+            fromScale = gradingSystems[currentGradingSystem];
+            scaleName = fromScale?.name || 'Unknown Scale';
+            semesterData = semesters;
+        }
         
         // Generate semester tables
         let semesterTables = '';
-        semesters.forEach((sem, idx) => {
+        semesterData.forEach((sem, idx) => {
             const semGPA = calculateSemesterGPA(sem.courses);
             semesterTables += `
                 <div style="margin-bottom:15px;">
@@ -894,7 +911,8 @@
             `;
         });
 
-        // Build transcript HTML (Clean version - NO grade scale table)
+        // Build transcript HTML
+        const titleSuffix = useConverted ? ' (CONVERTED)' : '';
         return `
             <div style="font-family:'Times New Roman',serif;max-width:170mm;margin:0 auto;padding:8mm;border:3px double #b53b2c;border-radius:4px;background:white;color:black;">
                 
@@ -902,7 +920,7 @@
                 <div style="text-align:center;border-bottom:2px solid #b53b2c;padding-bottom:6px;margin-bottom:10px;">
                     <div style="font-size:16px;font-weight:bold;color:#b53b2c;">${board || 'BOARD OF INTERMEDIATE AND SECONDARY EDUCATION'}</div>
                     <div style="font-size:14px;font-weight:bold;color:#b53b2c;">${institution || 'INSTITUTION NAME'}</div>
-                    <div style="font-size:13px;font-weight:bold;margin-top:2px;">ACADEMIC TRANSCRIPT</div>
+                    <div style="font-size:13px;font-weight:bold;margin-top:2px;">ACADEMIC TRANSCRIPT${titleSuffix}</div>
                     <div style="font-size:11px;color:#555;margin-top:2px;">${examName || 'Examination'} - ${examYear || 'Year'}</div>
                 </div>
                 
@@ -943,7 +961,7 @@
                 <div style="background:#f0f0f0;border:1px solid #b53b2c;border-radius:3px;padding:6px 10px;margin:6px 0;display:flex;justify-content:space-around;text-align:center;">
                     <div><span style="font-weight:bold;font-size:12px;">CGPA:</span> <span style="font-weight:bold;font-size:14px;color:#b53b2c;">${cgpa.toFixed(2)}</span></div>
                     <div><span style="font-weight:bold;font-size:12px;">Total Credits:</span> <span style="font-weight:bold;font-size:14px;color:#b53b2c;">${totalCredits}</span></div>
-                    <div><span style="font-weight:bold;font-size:12px;">Semesters:</span> <span style="font-weight:bold;font-size:14px;color:#b53b2c;">${semesters.length}</span></div>
+                    <div><span style="font-weight:bold;font-size:12px;">Semesters:</span> <span style="font-weight:bold;font-size:14px;color:#b53b2c;">${semesterData.length}</span></div>
                 </div>
                 
                 <!-- Signatures -->
@@ -969,7 +987,56 @@
     }
 
     // ============================================================
-    // EXPORT FUNCTIONS
+    // GET CONVERTED RESULT
+    // ============================================================
+    function getConvertedResult(targetSystem) {
+        const allCourses = [];
+        semesters.forEach(sem => {
+            sem.courses.forEach(course => {
+                allCourses.push({
+                    grade: course.grade,
+                    credit: course.credit || 3,
+                    name: course.name
+                });
+            });
+        });
+        
+        // Convert each course
+        const convertedCourses = allCourses.map(course => {
+            const converted = convertCourseGrade(course.grade, currentGradingSystem, targetSystem, course.credit || 1);
+            return {
+                name: course.name,
+                grade: converted.convertedGrade,
+                credit: course.credit || 3,
+                originalGrade: course.grade
+            };
+        });
+        
+        // Calculate converted CGPA
+        const scale = gradingSystems[targetSystem];
+        let totalPoints = 0, totalCredits = 0;
+        convertedCourses.forEach(course => {
+            const gradeData = scale?.grades?.find(g => g.letter === course.grade);
+            if (gradeData) {
+                totalPoints += gradeData.point * course.credit;
+                totalCredits += course.credit;
+            }
+        });
+        const convertedCGPA = totalCredits === 0 ? 0 : Math.round((totalPoints / totalCredits) * 100) / 100;
+        
+        // Return converted data
+        return {
+            cgpa: convertedCGPA,
+            totalCredits: totalCredits,
+            semesters: [{
+                name: 'Converted Result',
+                courses: convertedCourses
+            }]
+        };
+    }
+
+    // ============================================================
+    // EXPORT FUNCTIONS (UPDATED)
     // ============================================================
     function exportToPDF() {
         showToast('Generating transcript...');
@@ -979,7 +1046,7 @@
             return;
         }
         try {
-            const transcriptHTML = generateTranscriptHTML();
+            const transcriptHTML = generateTranscriptHTML(false);
             const container = document.createElement('div');
             container.id = 'transcript-container';
             container.style.cssText = 'position:fixed;left:-9999px;top:0;width:210mm;padding:5mm;background:white;color:black;font-family:Times New Roman,serif;z-index:9999;';
@@ -1004,6 +1071,59 @@
                 const studentName = document.getElementById('student-name')?.value || 'Transcript';
                 pdf.save(`Transcript_${studentName.replace(/\s+/g, '_')}.pdf`);
                 showToast('Transcript downloaded successfully!');
+            }).catch(error => {
+                document.body.removeChild(container);
+                console.error('PDF error:', error);
+                showToast('Error generating PDF. Please try again.');
+            });
+        } catch (error) {
+            console.error('Export error:', error);
+            showToast('Error: ' + error.message);
+        }
+    }
+
+    // ============================================================
+    // EXPORT CONVERTED PDF (NEW FUNCTION)
+    // ============================================================
+    function exportConvertedPDF() {
+        const targetSystem = document.getElementById('convert-target')?.value;
+        if (!targetSystem) {
+            showToast('Please select a target system first!');
+            return;
+        }
+        
+        showToast('Generating converted transcript...');
+        if (typeof html2canvas === 'undefined' || typeof window.jspdf === 'undefined') {
+            showToast('Loading PDF libraries...');
+            loadPDFLibraries();
+            return;
+        }
+        try {
+            const transcriptHTML = generateTranscriptHTML(true, targetSystem);
+            const container = document.createElement('div');
+            container.id = 'transcript-container';
+            container.style.cssText = 'position:fixed;left:-9999px;top:0;width:210mm;padding:5mm;background:white;color:black;font-family:Times New Roman,serif;z-index:9999;';
+            container.innerHTML = transcriptHTML;
+            document.body.appendChild(container);
+            const { jsPDF } = window.jspdf;
+            html2canvas(container, { scale: 2, backgroundColor: '#ffffff', logging: false, allowTaint: true, useCORS: true }).then(canvas => {
+                document.body.removeChild(container);
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                let heightLeft = pdfHeight - pdf.internal.pageSize.getHeight();
+                let position = -pdf.internal.pageSize.getHeight();
+                while (heightLeft > 0) {
+                    position -= pdf.internal.pageSize.getHeight();
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
+                    heightLeft -= pdf.internal.pageSize.getHeight();
+                }
+                const studentName = document.getElementById('student-name')?.value || 'Transcript';
+                pdf.save(`Converted_Transcript_${studentName.replace(/\s+/g, '_')}.pdf`);
+                showToast('Converted transcript downloaded successfully!');
             }).catch(error => {
                 document.body.removeChild(container);
                 console.error('PDF error:', error);
@@ -1107,6 +1227,7 @@
     window.setCreditMode = setCreditMode;
     window.showTab = showTab;
     window.exportToPDF = exportToPDF;
+    window.exportConvertedPDF = exportConvertedPDF;
     window.printTranscript = printTranscript;
     window.toggleTheme = toggleTheme;
     window.convertResult = convertResult;
@@ -1118,6 +1239,7 @@
     window.calculateSemesterGPA = calculateSemesterGPA;
     window.totalCreditsAll = totalCreditsAll;
     window.generateTranscriptHTML = generateTranscriptHTML;
+    window.getConvertedResult = getConvertedResult;
 
     // ============================================================
     // START

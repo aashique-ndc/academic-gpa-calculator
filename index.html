@@ -11,97 +11,218 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
         * { font-family: 'Inter', system-ui, sans-serif; }
-        .tab-btn.active { border-bottom: 3px solid #3b82f6; color: #3b82f6; }
-        .tab-btn { transition: all 0.2s; padding: 12px 24px; font-weight: 600; cursor: pointer; }
+        
+        /* Mars Theme Colors */
+        :root {
+            --mars-primary: #d95a3a;
+            --mars-primary-dark: #b53b2c;
+            --mars-primary-light: #e68a6f;
+            --mars-bg: #1e1614;
+            --mars-card: #2a201c;
+            --mars-border: #4a322a;
+            --mars-text: #eee5de;
+            --mars-text-muted: #b08a7a;
+        }
+        
+        body { 
+            background: #120e0c; 
+            color: var(--mars-text);
+        }
+        
+        .mars-gradient { 
+            background: linear-gradient(145deg, #b53b2c, #7a2e1a); 
+        }
+        
+        .mars-shadow { 
+            box-shadow: 0 12px 30px -10px rgba(181, 59, 44, 0.4); 
+        }
+        
+        .tab-btn.active { 
+            border-bottom: 4px solid var(--mars-primary); 
+            color: var(--mars-primary); 
+        }
+        
+        .tab-btn { 
+            transition: all 0.2s; 
+            padding: 12px 24px; 
+            font-weight: 600; 
+            cursor: pointer; 
+            color: var(--mars-text-muted);
+        }
+        
+        .tab-btn:hover {
+            color: var(--mars-primary-light);
+        }
+        
         .tab-content { display: block; }
         .tab-content.hidden { display: none; }
-        @media print { .no-print { display: none !important; } body { background: white !important; } }
-        .handle { cursor: grab; }
+        
+        .bg-mars-dark { background-color: var(--mars-bg); }
+        .bg-mars-card { background-color: var(--mars-card); }
+        .border-mars { border-color: var(--mars-border); }
+        .text-mars { color: var(--mars-primary-light); }
+        
+        @media print { 
+            .no-print { display: none !important; } 
+            body { background: white !important; color: black !important; } 
+        }
+        
+        .handle { cursor: grab; color: var(--mars-text-muted); }
         .handle:active { cursor: grabbing; }
-        #toast { animation: slideUp 0.3s ease forwards; }
+        
+        #toast { 
+            animation: slideUp 0.3s ease forwards;
+            background: var(--mars-card);
+            border: 1px solid var(--mars-primary);
+            color: var(--mars-text);
+        }
         #toast.hidden { animation: slideDown 0.3s ease forwards; }
-        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        @keyframes slideDown { from { transform: translateY(0); opacity: 1; } to { transform: translateY(20px); opacity: 0; } }
+        
+        @keyframes slideUp { 
+            from { transform: translateY(20px); opacity: 0; } 
+            to { transform: translateY(0); opacity: 1; } 
+        }
+        @keyframes slideDown { 
+            from { transform: translateY(0); opacity: 1; } 
+            to { transform: translateY(20px); opacity: 0; } 
+        }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--mars-bg); }
+        ::-webkit-scrollbar-thumb { background: var(--mars-primary); border-radius: 20px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--mars-primary-dark); }
+        
+        /* Inputs */
+        input, select {
+            background: var(--mars-bg);
+            border-color: var(--mars-border);
+            color: var(--mars-text);
+            transition: all 0.2s;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--mars-primary);
+            box-shadow: 0 0 0 3px rgba(217, 90, 58, 0.2);
+        }
+        input::placeholder {
+            color: var(--mars-text-muted);
+        }
+        
+        /* Cards */
+        .mars-card {
+            background: var(--mars-card);
+            border: 1px solid var(--mars-border);
+            border-radius: 1.5rem;
+        }
+        
+        /* Buttons */
+        .btn-mars {
+            background: linear-gradient(145deg, #b53b2c, #7a2e1a);
+            color: white;
+            transition: all 0.3s;
+        }
+        .btn-mars:hover {
+            opacity: 0.9;
+            transform: scale(1.02);
+        }
+        
+        .btn-mars-outline {
+            border: 2px solid var(--mars-primary);
+            color: var(--mars-primary);
+            background: transparent;
+        }
+        .btn-mars-outline:hover {
+            background: var(--mars-primary);
+            color: white;
+        }
+        
+        .btn-mars-outline.active {
+            border-color: var(--mars-primary);
+            color: var(--mars-primary);
+            background: rgba(217, 90, 58, 0.1);
+        }
     </style>
 </head>
-<body class="bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 min-h-screen transition-colors">
+<body>
 
-    <div class="max-w-7xl mx-auto">
+    <div class="max-w-7xl mx-auto px-4">
         <!-- Header -->
-        <header class="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border-b border-gray-200 dark:border-gray-700 no-print">
-            <div class="px-6 py-5 flex items-center justify-between">
+        <header class="sticky top-0 z-50 bg-[#1e1614]/90 backdrop-blur-lg border-b border-[#4a322a] no-print">
+            <div class="px-4 py-5 flex items-center justify-between">
                 <div class="flex items-center gap-3">
-                    <div class="w-11 h-11 bg-gradient-to-br from-blue-600 to-violet-600 rounded-2xl flex items-center justify-center text-white font-bold text-3xl shadow-lg">M</div>
+                    <div class="w-12 h-12 mars-gradient rounded-2xl flex items-center justify-center text-white font-black text-4xl shadow-lg">⭒</div>
                     <div>
-                        <h1 class="text-3xl font-bold tracking-tight">MarsCal</h1>
-                        <p class="text-sm text-gray-500 dark:text-gray-400 -mt-1">Academic Performance Calculator</p>
+                        <h1 class="text-4xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-[#f09070] to-[#d95a3a]">MarsCal</h1>
+                        <p class="text-sm text-[#b08a7a] -mt-1">intergalactic GPA · SGPA · CGPA</p>
                     </div>
                 </div>
                 <div class="flex items-center gap-4 no-print">
-                    <button onclick="toggleTheme()" id="theme-toggle" class="p-3 rounded-2xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-all">
-                        <i class="fas fa-moon text-xl"></i>
+                    <button onclick="toggleTheme()" id="theme-toggle" class="p-3 rounded-2xl hover:bg-[#3a2a22] transition-all text-[#d95a3a]">
+                        <i class="fas fa-rocket text-xl"></i>
                     </button>
-                    <button onclick="exportToPDF()" class="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-medium transition-all shadow-md">
+                    <button onclick="exportToPDF()" class="flex items-center gap-2 px-6 py-3 mars-gradient text-white rounded-2xl font-medium transition-all mars-shadow">
                         <i class="fas fa-download"></i> <span>Export PDF</span>
                     </button>
-                    <button onclick="printTranscript()" class="flex items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-2xl font-medium transition-all shadow-md">
+                    <button onclick="printTranscript()" class="flex items-center gap-2 px-6 py-3 bg-[#2a201c] border border-[#4a322a] text-[#eee5de] rounded-2xl font-medium transition-all hover:border-[#d95a3a]">
                         <i class="fas fa-print"></i> <span>Print</span>
                     </button>
                 </div>
             </div>
         </header>
 
-        <div class="flex flex-col lg:flex-row">
+        <div class="flex flex-col lg:flex-row gap-6 py-6">
             <!-- Sidebar -->
-            <div class="lg:w-96 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 p-6 lg:min-h-screen overflow-auto no-print">
+            <div class="lg:w-96 bg-[#1e1614] border border-[#4a322a] rounded-3xl p-6 lg:min-h-[80vh] overflow-auto no-print">
                 <!-- Student Info -->
                 <div class="mb-8">
-                    <h2 class="text-lg font-semibold mb-4 flex items-center gap-2"><i class="fas fa-user-circle"></i> Student Information</h2>
+                    <h2 class="text-lg font-semibold mb-4 flex items-center gap-2 text-[#e68a6f]"><i class="fas fa-user-astronaut"></i> Crew Info</h2>
                     <div class="space-y-3">
-                        <input id="student-name" type="text" placeholder="Full Name" class="w-full px-4 py-3 rounded-2xl border border-gray-200 dark:border-gray-700 focus:outline-none focus:border-blue-500 bg-white dark:bg-gray-800">
-                        <input id="student-institution" type="text" placeholder="Institution Name" class="w-full px-4 py-3 rounded-2xl border border-gray-200 dark:border-gray-700 focus:outline-none focus:border-blue-500 bg-white dark:bg-gray-800">
-                        <input id="student-board" type="text" placeholder="Board" class="w-full px-4 py-3 rounded-2xl border border-gray-200 dark:border-gray-700 focus:outline-none focus:border-blue-500 bg-white dark:bg-gray-800">
-                        <input id="student-subject" type="text" placeholder="Subject/Group" class="w-full px-4 py-3 rounded-2xl border border-gray-200 dark:border-gray-700 focus:outline-none focus:border-blue-500 bg-white dark:bg-gray-800">
+                        <input id="student-name" type="text" placeholder="Explorer name" class="w-full px-4 py-3 rounded-2xl border border-[#4a322a] focus:outline-none focus:border-[#d95a3a] bg-[#1e1614] text-[#eee5de]">
+                        <input id="student-institution" type="text" placeholder="Institution" class="w-full px-4 py-3 rounded-2xl border border-[#4a322a] focus:outline-none focus:border-[#d95a3a] bg-[#1e1614] text-[#eee5de]">
+                        <input id="student-board" type="text" placeholder="Board" class="w-full px-4 py-3 rounded-2xl border border-[#4a322a] focus:outline-none focus:border-[#d95a3a] bg-[#1e1614] text-[#eee5de]">
+                        <input id="student-subject" type="text" placeholder="Subject/Group" class="w-full px-4 py-3 rounded-2xl border border-[#4a322a] focus:outline-none focus:border-[#d95a3a] bg-[#1e1614] text-[#eee5de]">
                         <div class="grid grid-cols-2 gap-3">
-                            <input id="student-roll" type="text" placeholder="Roll" class="w-full px-4 py-3 rounded-2xl border border-gray-200 dark:border-gray-700 focus:outline-none focus:border-blue-500 bg-white dark:bg-gray-800">
-                            <input id="student-registration" type="text" placeholder="Registration" class="w-full px-4 py-3 rounded-2xl border border-gray-200 dark:border-gray-700 focus:outline-none focus:border-blue-500 bg-white dark:bg-gray-800">
+                            <input id="student-roll" type="text" placeholder="Roll" class="w-full px-4 py-3 rounded-2xl border border-[#4a322a] focus:outline-none focus:border-[#d95a3a] bg-[#1e1614] text-[#eee5de]">
+                            <input id="student-registration" type="text" placeholder="Registration" class="w-full px-4 py-3 rounded-2xl border border-[#4a322a] focus:outline-none focus:border-[#d95a3a] bg-[#1e1614] text-[#eee5de]">
                         </div>
-                        <input id="student-exam-name" type="text" placeholder="Examination Name" class="w-full px-4 py-3 rounded-2xl border border-gray-200 dark:border-gray-700 focus:outline-none focus:border-blue-500 bg-white dark:bg-gray-800">
-                        <input id="student-exam-year" type="text" placeholder="Examination Year" class="w-full px-4 py-3 rounded-2xl border border-gray-200 dark:border-gray-700 focus:outline-none focus:border-blue-500 bg-white dark:bg-gray-800">
+                        <input id="student-exam-name" type="text" placeholder="Examination Name" class="w-full px-4 py-3 rounded-2xl border border-[#4a322a] focus:outline-none focus:border-[#d95a3a] bg-[#1e1614] text-[#eee5de]">
+                        <input id="student-exam-year" type="text" placeholder="Examination Year" class="w-full px-4 py-3 rounded-2xl border border-[#4a322a] focus:outline-none focus:border-[#d95a3a] bg-[#1e1614] text-[#eee5de]">
                     </div>
                 </div>
 
                 <!-- Grading System -->
                 <div class="mb-8">
-                    <h2 class="text-lg font-semibold mb-4 flex items-center gap-2"><i class="fas fa-graduation-cap"></i> Grading System</h2>
-                    <select id="grading-system" onchange="changeGradingSystem()" class="w-full px-4 py-3 rounded-2xl border border-gray-200 dark:border-gray-700 focus:outline-none bg-white dark:bg-gray-800"></select>
+                    <h2 class="text-lg font-semibold mb-4 flex items-center gap-2 text-[#e68a6f]"><i class="fas fa-globe-americas"></i> Grading System</h2>
+                    <select id="grading-system" onchange="changeGradingSystem()" class="w-full px-4 py-3 rounded-2xl border border-[#4a322a] focus:outline-none focus:border-[#d95a3a] bg-[#1e1614] text-[#eee5de]"></select>
                 </div>
 
                 <!-- Credit Mode -->
                 <div>
-                    <h2 class="text-lg font-semibold mb-4">Credit System</h2>
+                    <h2 class="text-lg font-semibold mb-4 text-[#e68a6f]">Credit Mode</h2>
                     <div class="flex gap-3">
-                        <button onclick="setCreditMode('equal')" id="equal-btn" class="flex-1 py-4 rounded-2xl border-2 font-medium transition-all border-blue-500 text-blue-600">Equal Credit</button>
-                        <button onclick="setCreditMode('variable')" id="variable-btn" class="flex-1 py-4 rounded-2xl border-2 font-medium transition-all border-gray-300 dark:border-gray-600">Variable Credit</button>
+                        <button onclick="setCreditMode('equal')" id="equal-btn" class="flex-1 py-4 rounded-2xl border-2 font-medium transition-all border-[#d95a3a] text-[#d95a3a]">Equal</button>
+                        <button onclick="setCreditMode('variable')" id="variable-btn" class="flex-1 py-4 rounded-2xl border-2 font-medium transition-all border-[#4a322a] text-[#b08a7a]">Variable</button>
                     </div>
                 </div>
+                <div class="mt-8 text-center text-[#7a5a4a] text-xs"><i class="fas fa-map-pin"></i> Olympus Mons · Sol 2026</div>
             </div>
 
             <!-- Main Content -->
-            <div class="flex-1 p-6 lg:p-8">
+            <div class="flex-1 bg-[#1e1614] border border-[#4a322a] rounded-3xl p-6 lg:p-8">
                 <!-- Tabs -->
-                <div class="flex border-b border-gray-200 dark:border-gray-700 mb-8 no-print">
-                    <button onclick="showTab(0)" class="tab-btn active">Semesters</button>
-                    <button onclick="showTab(1)" class="tab-btn">Charts</button>
-                    <button onclick="showTab(2)" class="tab-btn">Convert</button>
+                <div class="flex border-b border-[#4a322a] mb-8 no-print">
+                    <button onclick="showTab(0)" class="tab-btn active"><i class="fas fa-layer-group mr-2"></i>Semesters</button>
+                    <button onclick="showTab(1)" class="tab-btn"><i class="fas fa-chart-pie mr-2"></i>Charts</button>
+                    <button onclick="showTab(2)" class="tab-btn"><i class="fas fa-exchange-alt mr-2"></i>Convert</button>
                 </div>
 
                 <!-- Semesters Tab -->
                 <div id="tab-0" class="tab-content">
                     <div id="semesters-container" class="space-y-8"></div>
-                    <button onclick="addSemester()" class="mt-8 w-full py-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-3xl text-gray-500 hover:text-blue-600 hover:border-blue-300 flex items-center justify-center gap-3 text-lg no-print">
+                    <button onclick="addSemester()" class="mt-8 w-full py-6 border-2 border-dashed border-[#4a322a] rounded-3xl text-[#b08a7a] hover:text-[#d95a3a] hover:border-[#d95a3a] flex items-center justify-center gap-3 text-lg transition no-print">
                         <i class="fas fa-plus"></i> Add New Semester
                     </button>
                 </div>
@@ -109,46 +230,55 @@
                 <!-- Charts Tab -->
                 <div id="tab-1" class="tab-content hidden no-print">
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <div class="bg-white dark:bg-gray-900 rounded-3xl p-6 shadow-sm">
-                            <h3 class="font-semibold mb-4">Grade Distribution</h3>
-                            <canvas id="pieChart" height="300"></canvas>
+                        <div class="bg-[#2a201c] rounded-3xl p-6 border border-[#4a322a]">
+                            <h3 class="font-semibold mb-4 text-[#e68a6f]">Grade distribution</h3>
+                            <canvas id="pieChart" height="280"></canvas>
                         </div>
-                        <div class="bg-white dark:bg-gray-900 rounded-3xl p-6 shadow-sm">
-                            <h3 class="font-semibold mb-4">GPA Trend</h3>
-                            <canvas id="lineChart" height="300"></canvas>
+                        <div class="bg-[#2a201c] rounded-3xl p-6 border border-[#4a322a]">
+                            <h3 class="font-semibold mb-4 text-[#e68a6f]">GPA trend</h3>
+                            <canvas id="lineChart" height="280"></canvas>
                         </div>
                     </div>
                 </div>
 
                 <!-- Convert Tab -->
                 <div id="tab-2" class="tab-content hidden no-print">
-                    <div class="bg-white dark:bg-gray-900 rounded-3xl p-8">
-                        <h3 class="font-semibold mb-6">Result Conversion</h3>
+                    <div class="bg-[#2a201c] rounded-3xl p-8 border border-[#4a322a]">
+                        <h3 class="font-semibold mb-6 text-[#e68a6f]">Result Conversion</h3>
                         <div class="space-y-6">
                             <div>
-                                <label class="block text-sm font-medium mb-2">Current CGPA: <span id="current-cgpa-display" class="font-bold text-blue-600">0.00</span></label>
-                                <label class="block text-sm font-medium mb-2">Current Scale: <span id="current-scale-display" class="font-medium">Bangladesh (4.00 Scale)</span></label>
+                                <label class="block text-sm font-medium mb-2 text-[#b08a7a]">Current CGPA: <span id="current-cgpa-display" class="font-bold text-[#d95a3a]">0.00</span></label>
+                                <label class="block text-sm font-medium mb-2 text-[#b08a7a]">Current Scale: <span id="current-scale-display" class="font-medium text-[#eee5de]">Bangladesh (4.00 Scale)</span></label>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium mb-2">Convert to:</label>
-                                <select id="convert-target" class="w-full px-4 py-3 rounded-2xl border border-gray-200 dark:border-gray-700 focus:outline-none focus:border-blue-500 bg-white dark:bg-gray-800"></select>
+                                <label class="block text-sm font-medium mb-2 text-[#b08a7a]">Convert to:</label>
+                                <select id="convert-target" class="w-full px-4 py-3 rounded-2xl border border-[#4a322a] focus:outline-none focus:border-[#d95a3a] bg-[#1e1614] text-[#eee5de]"></select>
                             </div>
-                            <button onclick="convertResult()" class="w-full py-3 bg-gradient-to-br from-blue-500 to-violet-600 text-white rounded-2xl font-medium hover:opacity-90 transition">Convert Result</button>
-                            <div id="conversion-result" class="mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-2xl hidden">
-                                <p class="text-sm text-gray-600 dark:text-gray-400">Converted CGPA: <span id="converted-cgpa" class="font-bold text-lg text-blue-600"></span></p>
-                                <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Target Scale: <span id="target-scale-name" class="font-medium"></span></p>
-                                <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Conversion Method: <span class="font-medium">Upper Bound Percentage Mapping</span></p>
-                                <div id="conversion-details" class="mt-3 text-xs text-gray-500"></div>
+                            <button onclick="convertResult()" class="w-full py-3 mars-gradient text-white rounded-2xl font-medium hover:opacity-90 transition mars-shadow">Convert Result</button>
+                            <div id="conversion-result" class="mt-4 p-4 bg-[#1e1614] border border-[#4a322a] rounded-2xl hidden">
+                                <p class="text-sm text-[#b08a7a]">Converted CGPA: <span id="converted-cgpa" class="font-bold text-lg text-[#d95a3a]"></span></p>
+                                <p class="text-sm text-[#b08a7a] mt-1">Target Scale: <span id="target-scale-name" class="font-medium text-[#eee5de]"></span></p>
+                                <p class="text-sm text-[#b08a7a] mt-1">Conversion Method: <span class="font-medium text-[#eee5de]">Upper Bound Percentage Mapping</span></p>
+                                <div id="conversion-details" class="mt-3 text-xs text-[#7a5a4a]"></div>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Summary Card -->
-                <div class="mt-12 bg-gradient-to-br from-blue-500 to-violet-600 text-white rounded-3xl p-8 shadow-xl no-print">
+                <div class="mt-12 mars-gradient text-white rounded-3xl p-8 mars-shadow border border-[#d95a3a]/40">
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-                        <div><div id="cgpa-display" class="text-5xl font-bold">0.00</div><div class="text-sm opacity-75">CGPA</div></div>
-                        <div><div id="total-credits" class="text-5xl font-bold">0</div><div class="text-sm opacity-75">Total Credits</div></div>
+                        <div>
+                            <div id="cgpa-display" class="text-5xl font-extrabold tracking-wider">0.00</div>
+                            <div class="text-sm opacity-80">CGPA (Martian)</div>
+                        </div>
+                        <div>
+                            <div id="total-credits" class="text-5xl font-extrabold">0</div>
+                            <div class="text-sm opacity-80">Total Credits</div>
+                        </div>
+                        <div class="col-span-2 flex items-center justify-end gap-2 text-sm opacity-80">
+                            <i class="fas fa-robot"></i> <span>MarsCal v2 · deep space grading</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -156,7 +286,7 @@
     </div>
 
     <!-- Toast -->
-    <div id="toast" class="hidden fixed bottom-4 right-4 bg-gray-800 text-white px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 no-print"></div>
+    <div id="toast" class="hidden fixed bottom-4 right-4 bg-[#2a201c] border border-[#d95a3a] text-[#eee5de] px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 no-print"></div>
 
     <script>
     // ============================================================
@@ -426,7 +556,7 @@
         container.innerHTML = '';
         semesters.forEach((sem, semIdx) => {
             const div = document.createElement('div');
-            div.className = 'bg-white dark:bg-gray-900 rounded-3xl p-5 border border-gray-200 dark:border-gray-700';
+            div.className = 'bg-[#2a201c] rounded-3xl p-5 border border-[#4a322a]';
             const semGPA = calculateSemesterGPA(sem.courses);
             let coursesHTML = '';
             sem.courses.forEach((course, cIdx) => {
@@ -434,30 +564,30 @@
                     `<option value="${g.letter}" ${course.grade === g.letter ? 'selected' : ''}>${g.letter} (${g.point})</option>`
                 ).join('');
                 const creditInput = creditMode === 'variable' ? 
-                    `<input type="number" value="${course.credit || 3}" min="0.5" step="0.5" class="w-16 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-2 py-2 text-sm focus:outline-none credit-input" onchange="updateCourseCredit(${semIdx}, ${cIdx}, this.value)">` : '';
+                    `<input type="number" value="${course.credit || 3}" min="0.5" step="0.5" class="w-16 bg-[#1e1614] border border-[#4a322a] rounded-xl px-2 py-2 text-sm focus:outline-none focus:border-[#d95a3a] text-[#eee5de] credit-input" onchange="updateCourseCredit(${semIdx}, ${cIdx}, this.value)">` : '';
                 coursesHTML += `
                     <div class="flex items-center gap-3">
-                        <input type="text" value="${course.name}" class="flex-1 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500" onchange="updateCourseName(${semIdx}, ${cIdx}, this.value)">
-                        <select class="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-sm focus:outline-none grade-select" onchange="updateCourseGrade(${semIdx}, ${cIdx}, this.value)">${gradeOptions}</select>
+                        <input type="text" value="${course.name}" class="flex-1 bg-[#1e1614] border border-[#4a322a] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#d95a3a] text-[#eee5de]" onchange="updateCourseName(${semIdx}, ${cIdx}, this.value)">
+                        <select class="bg-[#1e1614] border border-[#4a322a] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#d95a3a] text-[#eee5de] grade-select" onchange="updateCourseGrade(${semIdx}, ${cIdx}, this.value)">${gradeOptions}</select>
                         ${creditInput}
-                        <button onclick="removeCourse(${semIdx}, ${cIdx})" class="text-gray-400 hover:text-red-500"><i class="fas fa-times"></i></button>
+                        <button onclick="removeCourse(${semIdx}, ${cIdx})" class="text-[#7a5a4a] hover:text-[#d95a3a]"><i class="fas fa-times"></i></button>
                     </div>
                 `;
             });
             div.innerHTML = `
                 <div class="flex items-center justify-between mb-4">
                     <div class="flex items-center gap-3">
-                        <i class="fas fa-grip-vertical text-gray-400 cursor-grab handle"></i>
-                        <span class="font-semibold">${sem.name}</span>
-                        <input type="text" value="${sem.name}" class="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-1 text-sm w-36 focus:outline-none focus:border-blue-500" onchange="updateSemesterName(${semIdx}, this.value)">
+                        <i class="fas fa-grip-vertical text-[#7a5a4a] cursor-grab handle"></i>
+                        <span class="font-semibold text-[#e68a6f]">${sem.name}</span>
+                        <input type="text" value="${sem.name}" class="bg-[#1e1614] border border-[#4a322a] rounded-xl px-3 py-1 text-sm w-36 focus:outline-none focus:border-[#d95a3a] text-[#eee5de]" onchange="updateSemesterName(${semIdx}, this.value)">
                     </div>
                     <div class="flex gap-2">
-                        <span class="text-sm text-gray-500">GPA: <strong>${semGPA.toFixed(2)}</strong></span>
-                        <button onclick="removeSemester(${semIdx})" class="text-gray-400 hover:text-red-500"><i class="fas fa-trash"></i></button>
+                        <span class="text-sm text-[#b08a7a]">GPA: <strong class="text-[#e68a6f]">${semGPA.toFixed(2)}</strong></span>
+                        <button onclick="removeSemester(${semIdx})" class="text-[#7a5a4a] hover:text-[#d95a3a]"><i class="fas fa-trash"></i></button>
                     </div>
                 </div>
                 <div class="space-y-3">${coursesHTML}</div>
-                <button onclick="addCourse(${semIdx})" class="mt-3 text-sm text-gray-500 hover:text-blue-600 flex items-center gap-2"><i class="fas fa-plus"></i> Add Course</button>
+                <button onclick="addCourse(${semIdx})" class="mt-3 text-sm text-[#b08a7a] hover:text-[#d95a3a] flex items-center gap-2"><i class="fas fa-plus"></i> Add Course</button>
             `;
             container.appendChild(div);
         });
@@ -517,11 +647,13 @@
             select.value = currentGradingSystem;
             select.addEventListener('change', changeGradingSystem);
         }
+
         loadState();
         renderSemesters();
         updateSummary();
         populateConvertTarget();
         updateCharts();
+
         document.querySelectorAll('[id^="student-"]').forEach(input => {
             input.addEventListener('change', saveState);
             input.addEventListener('keyup', saveState);
@@ -529,7 +661,8 @@
     }
 
     function changeGradingSystem() {
-        currentGradingSystem = document.getElementById('grading-system').value;
+        const select = document.getElementById('grading-system');
+        if (select) currentGradingSystem = select.value;
         renderSemesters();
         updateSummary();
         populateConvertTarget();
@@ -539,8 +672,8 @@
 
     function setCreditMode(mode) {
         creditMode = mode;
-        document.getElementById('equal-btn').className = `flex-1 py-4 rounded-2xl border-2 font-medium transition-all ${mode === 'equal' ? 'border-blue-500 text-blue-600' : 'border-gray-300 dark:border-gray-600'}`;
-        document.getElementById('variable-btn').className = `flex-1 py-4 rounded-2xl border-2 font-medium transition-all ${mode === 'variable' ? 'border-blue-500 text-blue-600' : 'border-gray-300 dark:border-gray-600'}`;
+        document.getElementById('equal-btn').className = `flex-1 py-4 rounded-2xl border-2 font-medium transition-all ${mode === 'equal' ? 'border-[#d95a3a] text-[#d95a3a]' : 'border-[#4a322a] text-[#b08a7a]'}`;
+        document.getElementById('variable-btn').className = `flex-1 py-4 rounded-2xl border-2 font-medium transition-all ${mode === 'variable' ? 'border-[#d95a3a] text-[#d95a3a]' : 'border-[#4a322a] text-[#b08a7a]'}`;
         renderSemesters();
         saveState();
     }
@@ -625,15 +758,15 @@
         });
         const labels = Object.keys(gradeCount);
         const data = Object.values(gradeCount);
-        const colors = ['#3b82f6','#8b5cf6','#ec4899','#f59e0b','#10b981','#ef4444','#6366f1','#14b8a6','#f97316'];
+        const colors = ['#d95a3a','#e68a6f','#f09a7a','#b08a7a','#7a5a4a','#4a322a','#2a201c'];
         const pieCtx = document.getElementById('pieChart');
         if (pieCtx) {
             if (pieChartInstance) pieChartInstance.destroy();
             if (labels.length > 0) {
                 pieChartInstance = new Chart(pieCtx, {
                     type: 'pie',
-                    data: { labels, datasets: [{ data, backgroundColor: colors.slice(0, labels.length), borderColor: '#fff', borderWidth: 2 }] },
-                    options: { responsive: true }
+                    data: { labels, datasets: [{ data, backgroundColor: colors.slice(0, labels.length), borderColor: '#1e1614', borderWidth: 2 }] },
+                    options: { responsive: true, plugins: { legend: { labels: { color: '#b08a7a' } } } }
                 });
             }
         }
@@ -645,8 +778,8 @@
                 const maxVal = Math.max(4.5, ...semGpas.map(g => g + 0.5));
                 lineChartInstance = new Chart(lineCtx, {
                     type: 'line',
-                    data: { labels: semesters.map((_,i) => `Sem ${i+1}`), datasets: [{ label: 'GPA', data: semGpas, borderColor: '#3b82f6', backgroundColor: '#3b82f620', fill: true, tension: 0.3 }] },
-                    options: { responsive: true, scales: { y: { min: 0, max: Math.ceil(maxVal) } } }
+                    data: { labels: semesters.map((_,i) => `Sem ${i+1}`), datasets: [{ label: 'GPA', data: semGpas, borderColor: '#d95a3a', backgroundColor: '#d95a3a20', fill: true, tension: 0.3 }] },
+                    options: { responsive: true, plugins: { legend: { labels: { color: '#b08a7a' } } }, scales: { y: { min: 0, max: Math.ceil(maxVal), grid: { color: '#4a322a' } }, x: { grid: { color: '#4a322a' } } } }
                 });
             }
         }
@@ -689,7 +822,7 @@
         let detailsHTML = '<div class="mt-2">';
         allCourses.forEach((course, i) => {
             const converted = convertCourseGrade(course.grade, currentGradingSystem, targetSystem, course.credit || 1);
-            detailsHTML += `<div class="text-xs text-gray-600 dark:text-gray-400 mt-1">Course ${i+1}: ${course.grade} → ${converted.percentage}% → ${converted.convertedGrade}</div>`;
+            detailsHTML += `<div class="text-xs text-[#7a5a4a] mt-1">Course ${i+1}: ${course.grade} → ${converted.percentage}% → ${converted.convertedGrade}</div>`;
         });
         detailsHTML += '</div>';
         document.getElementById('converted-cgpa').textContent = convertedCGPA.toFixed(2);
@@ -720,7 +853,7 @@
             const semGPA = calculateSemesterGPA(sem.courses);
             semesterTables += `
                 <div style="margin-bottom:18px;">
-                    <h3 style="font-size:14px;font-weight:bold;margin-bottom:6px;border-bottom:2px solid #1a56db;padding-bottom:4px;color:#1a56db;">
+                    <h3 style="font-size:14px;font-weight:bold;margin-bottom:6px;border-bottom:2px solid #b53b2c;padding-bottom:4px;color:#b53b2c;">
                         ${sem.name} <span style="float:right;font-weight:normal;color:#333;font-size:13px;">GPA: ${semGPA.toFixed(2)}</span>
                     </h3>
                     <table style="width:100%;border-collapse:collapse;font-size:11px;">
@@ -751,7 +884,7 @@
         if (fromScale?.grades?.length > 0) {
             gradeScaleHTML = `
                 <div style="margin-top:15px;padding:10px 12px;background:#f9fafb;border:1px solid #d1d5db;border-radius:6px;">
-                    <h4 style="font-size:12px;font-weight:bold;margin-bottom:6px;color:#1a56db;">Grading Scale: ${scaleName}</h4>
+                    <h4 style="font-size:12px;font-weight:bold;margin-bottom:6px;color:#b53b2c;">Grading Scale: ${scaleName}</h4>
                     <table style="width:100%;border-collapse:collapse;font-size:10px;">
                         <thead><tr style="background:#e5e7eb;">
                             <th style="border:1px solid #9ca3af;padding:3px 5px;text-align:center;">Grade</th>
@@ -771,8 +904,8 @@
         }
         return `
             <div style="font-family:'Inter',Arial,sans-serif;max-width:170mm;margin:0 auto;padding:10px 0;">
-                <div style="text-align:center;border-bottom:3px double #1a56db;padding-bottom:12px;margin-bottom:15px;">
-                    <h1 style="font-size:22px;font-weight:bold;margin:0;color:#1a56db;letter-spacing:2px;">ACADEMIC TRANSCRIPT</h1>
+                <div style="text-align:center;border-bottom:3px double #b53b2c;padding-bottom:12px;margin-bottom:15px;">
+                    <h1 style="font-size:22px;font-weight:bold;margin:0;color:#b53b2c;letter-spacing:2px;">ACADEMIC TRANSCRIPT</h1>
                     <p style="font-size:11px;color:#666;margin:4px 0;">Generated by MarsCal v2.0 | ${new Date().toLocaleDateString()}</p>
                 </div>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 30px;margin-bottom:15px;border:1px solid #d1d5db;padding:12px 15px;border-radius:6px;background:#f9fafb;font-size:12px;">
@@ -785,15 +918,15 @@
                     <div><strong>Examination:</strong> ${examName}</div>
                     <div><strong>Year:</strong> ${examYear}</div>
                 </div>
-                <div style="margin-bottom:12px;"><h3 style="font-size:13px;font-weight:bold;margin:0 0 4px 0;color:#1a56db;">Grading System: ${scaleName}</h3></div>
+                <div style="margin-bottom:12px;"><h3 style="font-size:13px;font-weight:bold;margin:0 0 4px 0;color:#b53b2c;">Grading System: ${scaleName}</h3></div>
                 <div style="margin-bottom:15px;">${semesterTables}</div>
-                <div style="background:#eff6ff;border:2px solid #1a56db;border-radius:6px;padding:12px 15px;margin:15px 0;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;text-align:center;">
-                    <div><div style="font-size:11px;color:#4b5563;font-weight:500;">CGPA</div><div style="font-size:22px;font-weight:bold;color:#1a56db;">${cgpa.toFixed(2)}</div></div>
-                    <div><div style="font-size:11px;color:#4b5563;font-weight:500;">Total Credits</div><div style="font-size:22px;font-weight:bold;color:#1a56db;">${totalCredits}</div></div>
-                    <div><div style="font-size:11px;color:#4b5563;font-weight:500;">Total Semesters</div><div style="font-size:22px;font-weight:bold;color:#1a56db;">${semesters.length}</div></div>
+                <div style="background:#eff6ff;border:2px solid #b53b2c;border-radius:6px;padding:12px 15px;margin:15px 0;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;text-align:center;">
+                    <div><div style="font-size:11px;color:#4b5563;font-weight:500;">CGPA</div><div style="font-size:22px;font-weight:bold;color:#b53b2c;">${cgpa.toFixed(2)}</div></div>
+                    <div><div style="font-size:11px;color:#4b5563;font-weight:500;">Total Credits</div><div style="font-size:22px;font-weight:bold;color:#b53b2c;">${totalCredits}</div></div>
+                    <div><div style="font-size:11px;color:#4b5563;font-weight:500;">Total Semesters</div><div style="font-size:22px;font-weight:bold;color:#b53b2c;">${semesters.length}</div></div>
                 </div>
                 ${gradeScaleHTML}
-                <div style="margin-top:25px;padding-top:20px;border-top:2px solid #1a56db;display:grid;grid-template-columns:1fr 1fr;gap:40px;">
+                <div style="margin-top:25px;padding-top:20px;border-top:2px solid #b53b2c;display:grid;grid-template-columns:1fr 1fr;gap:40px;">
                     <div style="text-align:center;"><div style="border-bottom:1px solid #333;padding-bottom:30px;margin-bottom:4px;">&nbsp;</div><div style="font-size:11px;font-weight:600;">Controller of Examinations</div><div style="font-size:10px;color:#6b7280;">Signature & Date</div></div>
                     <div style="text-align:center;"><div style="border-bottom:1px solid #333;padding-bottom:30px;margin-bottom:4px;">&nbsp;</div><div style="font-size:11px;font-weight:600;">Head of Department / Principal</div><div style="font-size:10px;color:#6b7280;">Signature & Date</div></div>
                 </div>
@@ -893,7 +1026,8 @@
             if (data.creditMode) { creditMode = data.creditMode; }
             if (data.currentGradingSystem) {
                 currentGradingSystem = data.currentGradingSystem;
-                document.getElementById('grading-system').value = currentGradingSystem;
+                const select = document.getElementById('grading-system');
+                if (select) select.value = currentGradingSystem;
             }
             if (data.studentInfo) {
                 Object.keys(data.studentInfo).forEach(key => {
@@ -910,13 +1044,15 @@
     function toggleTheme() {
         document.body.classList.toggle('dark');
         const icon = document.querySelector('#theme-toggle i');
-        icon.className = document.body.classList.contains('dark') ? 'fas fa-sun text-xl' : 'fas fa-moon text-xl';
+        if (icon) {
+            icon.className = document.body.classList.contains('dark') ? 'fas fa-sun text-xl' : 'fas fa-rocket text-xl';
+        }
     }
 
     function showToast(message) {
         const toast = document.getElementById('toast');
         if (!toast) return;
-        toast.innerHTML = `<i class="fas fa-info-circle"></i> ${message}`;
+        toast.innerHTML = `<i class="fas fa-asterisk text-[#d95a3a]"></i> ${message}`;
         toast.classList.remove('hidden');
         clearTimeout(toast._hide);
         toast._hide = setTimeout(() => toast.classList.add('hidden'), 2500);

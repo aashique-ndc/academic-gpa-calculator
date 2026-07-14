@@ -8,13 +8,15 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="themes.css">
-    <link rel="stylesheet" href="print.css">
-    <link rel="stylesheet" href="animations.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         body { font-family: 'Inter', system-ui, sans-serif; }
+        .tab-btn.active { border-bottom: 3px solid #3b82f6; color: #3b82f6; }
+        .tab-btn { transition: all 0.2s; padding: 12px 24px; font-weight: 600; cursor: pointer; }
+        .tab-content { display: block; }
+        .tab-content.hidden { display: none; }
+        .grade-select, .credit-input { background: #f9fafb; }
+        .dark .grade-select, .dark .credit-input { background: #1f2937; }
     </style>
 </head>
 <body class="bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 min-h-screen transition-colors">
@@ -68,9 +70,9 @@
                     <h2 class="text-lg font-semibold mb-4">Credit System</h2>
                     <div class="flex gap-3">
                         <button onclick="setCreditMode('equal')" id="equal-btn"
-                                class="flex-1 py-4 rounded-2xl border-2 font-medium transition-all">Equal Credit</button>
+                                class="flex-1 py-4 rounded-2xl border-2 font-medium transition-all border-blue-500 text-blue-600">Equal Credit</button>
                         <button onclick="setCreditMode('variable')" id="variable-btn"
-                                class="flex-1 py-4 rounded-2xl border-2 font-medium transition-all">Variable Credit</button>
+                                class="flex-1 py-4 rounded-2xl border-2 font-medium transition-all border-gray-300 dark:border-gray-600">Variable Credit</button>
                     </div>
                 </div>
             </div>
@@ -79,9 +81,9 @@
             <div class="flex-1 p-6 lg:p-8">
                 <!-- Tabs -->
                 <div class="flex border-b border-gray-200 dark:border-gray-700 mb-8">
-                    <button onclick="showTab(0)" class="tab-btn active px-8 py-4 font-semibold">Semesters</button>
-                    <button onclick="showTab(1)" class="tab-btn px-8 py-4 font-semibold">Charts</button>
-                    <button onclick="showTab(2)" class="tab-btn px-8 py-4 font-semibold">Convert</button>
+                    <button onclick="showTab(0)" class="tab-btn active">Semesters</button>
+                    <button onclick="showTab(1)" class="tab-btn">Charts</button>
+                    <button onclick="showTab(2)" class="tab-btn">Convert</button>
                 </div>
 
                 <!-- Semesters Tab -->
@@ -114,7 +116,7 @@
                         <div class="space-y-6">
                             <div>
                                 <label class="block text-sm font-medium mb-2">Current CGPA: <span id="current-cgpa-display" class="font-bold text-blue-600">0.00</span></label>
-                                <label class="block text-sm font-medium mb-2">Current Scale: <span id="current-scale-display" class="font-medium">Bangladesh (5.00 Scale)</span></label>
+                                <label class="block text-sm font-medium mb-2">Current Scale: <span id="current-scale-display" class="font-medium">Bangladesh (4.00 Scale)</span></label>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium mb-2">Convert to:</label>
@@ -128,7 +130,8 @@
                             <div id="conversion-result" class="mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-2xl hidden">
                                 <p class="text-sm text-gray-600 dark:text-gray-400">Converted CGPA: <span id="converted-cgpa" class="font-bold text-lg text-blue-600"></span></p>
                                 <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Target Scale: <span id="target-scale-name" class="font-medium"></span></p>
-                                <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Conversion Method: <span class="font-medium">Direct Value Mapping</span></p>
+                                <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Conversion Method: <span class="font-medium">Upper Bound Percentage Mapping</span></p>
+                                <div id="conversion-details" class="mt-3 text-xs text-gray-500"></div>
                             </div>
                         </div>
                     </div>
@@ -154,569 +157,764 @@
     <!-- Toast -->
     <div id="toast" class="hidden fixed bottom-4 right-4 bg-gray-800 text-white px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3"></div>
 
-    <!-- External JS Files -->
-    <script src="constants.js"></script>
-    <script src="gradingData.js"></script>
-    <script src="utils.js"></script>
-    <script src="storage.js"></script>
-    <script src="calculator.js"></script>
-    <script src="ui.js"></script>
-    <script src="charts.js"></script>
-    <script src="converter.js"></script>
-    <script src="export.js"></script>
-    <script src="validation.js"></script>
-    <script src="customGrading.js"></script>
-    <script src="transcript.js"></script>
-    <script src="app.js"></script>
-    
+    <!-- ============================================================ -->
+    <!-- ALL JAVASCRIPT INLINE (No external JS files needed) -->
+    <!-- ============================================================ -->
     <script>
-        // Fallback if external files don't load
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('MarsCal loaded successfully');
+        // ============================================================
+        // GRADING DATA (All systems with maxPercent - Upper Bound)
+        // ============================================================
+        const gradingSystems = {
+            bd5: {
+                id: "bd5",
+                name: "Bangladesh (5.00 Scale)",
+                maxGPA: 5.0,
+                passing: 1.0,
+                grades: [
+                    { letter: "A+", point: 5.00, minPercent: 80, maxPercent: 100 },
+                    { letter: "A", point: 4.00, minPercent: 70, maxPercent: 79 },
+                    { letter: "A-", point: 3.50, minPercent: 60, maxPercent: 69 },
+                    { letter: "B", point: 3.00, minPercent: 50, maxPercent: 59 },
+                    { letter: "C", point: 2.00, minPercent: 40, maxPercent: 49 },
+                    { letter: "D", point: 1.00, minPercent: 33, maxPercent: 39 },
+                    { letter: "F", point: 0.00, minPercent: 0, maxPercent: 32 }
+                ]
+            },
+            bd4: {
+                id: "bd4",
+                name: "Bangladesh (4.00 Scale)",
+                maxGPA: 4.0,
+                passing: 2.0,
+                grades: [
+                    { letter: "A+", point: 4.00, minPercent: 80, maxPercent: 100 },
+                    { letter: "A", point: 3.75, minPercent: 75, maxPercent: 79 },
+                    { letter: "A-", point: 3.50, minPercent: 70, maxPercent: 74 },
+                    { letter: "B+", point: 3.25, minPercent: 65, maxPercent: 69 },
+                    { letter: "B", point: 3.00, minPercent: 60, maxPercent: 64 },
+                    { letter: "B-", point: 2.75, minPercent: 55, maxPercent: 59 },
+                    { letter: "C+", point: 2.50, minPercent: 50, maxPercent: 54 },
+                    { letter: "C", point: 2.25, minPercent: 45, maxPercent: 49 },
+                    { letter: "D", point: 2.00, minPercent: 40, maxPercent: 44 },
+                    { letter: "F", point: 0.00, minPercent: 0, maxPercent: 39 }
+                ]
+            },
+            india10: {
+                id: "india10",
+                name: "India (10.00 Scale)",
+                maxGPA: 10.0,
+                passing: 4.0,
+                grades: [
+                    { letter: "O", point: 10.00, minPercent: 90, maxPercent: 100 },
+                    { letter: "A+", point: 9.00, minPercent: 80, maxPercent: 89 },
+                    { letter: "A", point: 8.00, minPercent: 70, maxPercent: 79 },
+                    { letter: "B+", point: 7.00, minPercent: 60, maxPercent: 69 },
+                    { letter: "B", point: 6.00, minPercent: 55, maxPercent: 59 },
+                    { letter: "C", point: 5.00, minPercent: 50, maxPercent: 54 },
+                    { letter: "P", point: 4.00, minPercent: 40, maxPercent: 49 },
+                    { letter: "F", point: 0.00, minPercent: 0, maxPercent: 39 }
+                ]
+            },
+            pakistan4: {
+                id: "pakistan4",
+                name: "Pakistan (4.00 Scale)",
+                maxGPA: 4.0,
+                passing: 1.0,
+                grades: [
+                    { letter: "A", point: 4.00, minPercent: 85, maxPercent: 100 },
+                    { letter: "A-", point: 3.67, minPercent: 80, maxPercent: 84 },
+                    { letter: "B+", point: 3.33, minPercent: 75, maxPercent: 79 },
+                    { letter: "B", point: 3.00, minPercent: 71, maxPercent: 74 },
+                    { letter: "B-", point: 2.67, minPercent: 68, maxPercent: 70 },
+                    { letter: "C+", point: 2.33, minPercent: 64, maxPercent: 67 },
+                    { letter: "C", point: 2.00, minPercent: 61, maxPercent: 63 },
+                    { letter: "C-", point: 1.67, minPercent: 58, maxPercent: 60 },
+                    { letter: "D+", point: 1.33, minPercent: 54, maxPercent: 57 },
+                    { letter: "D", point: 1.00, minPercent: 50, maxPercent: 53 },
+                    { letter: "F", point: 0.00, minPercent: 0, maxPercent: 49 }
+                ]
+            },
+            us4: {
+                id: "us4",
+                name: "United States (4.00 Scale)",
+                maxGPA: 4.0,
+                passing: 1.0,
+                grades: [
+                    { letter: "A", point: 4.00, minPercent: 90, maxPercent: 100 },
+                    { letter: "A-", point: 3.70, minPercent: 87, maxPercent: 89 },
+                    { letter: "B+", point: 3.30, minPercent: 83, maxPercent: 86 },
+                    { letter: "B", point: 3.00, minPercent: 80, maxPercent: 82 },
+                    { letter: "B-", point: 2.70, minPercent: 77, maxPercent: 79 },
+                    { letter: "C+", point: 2.30, minPercent: 73, maxPercent: 76 },
+                    { letter: "C", point: 2.00, minPercent: 70, maxPercent: 72 },
+                    { letter: "C-", point: 1.70, minPercent: 67, maxPercent: 69 },
+                    { letter: "D+", point: 1.30, minPercent: 65, maxPercent: 66 },
+                    { letter: "D", point: 1.00, minPercent: 60, maxPercent: 64 },
+                    { letter: "F", point: 0.00, minPercent: 0, maxPercent: 59 }
+                ]
+            },
+            uk: {
+                id: "uk",
+                name: "United Kingdom (Honours Classification)",
+                maxGPA: 100,
+                passing: 40,
+                grades: [
+                    { letter: "First Class", point: 70, minPercent: 70, maxPercent: 100 },
+                    { letter: "Upper Second (2:1)", point: 60, minPercent: 60, maxPercent: 69 },
+                    { letter: "Lower Second (2:2)", point: 50, minPercent: 50, maxPercent: 59 },
+                    { letter: "Third Class", point: 40, minPercent: 40, maxPercent: 49 },
+                    { letter: "Fail", point: 0, minPercent: 0, maxPercent: 39 }
+                ]
+            },
+            ects: {
+                id: "ects",
+                name: "Europe (ECTS)",
+                maxGPA: 5,
+                passing: 1,
+                grades: [
+                    { letter: "A", point: 5, minPercent: 90, maxPercent: 100 },
+                    { letter: "B", point: 4, minPercent: 80, maxPercent: 89 },
+                    { letter: "C", point: 3, minPercent: 70, maxPercent: 79 },
+                    { letter: "D", point: 2, minPercent: 60, maxPercent: 69 },
+                    { letter: "E", point: 1, minPercent: 50, maxPercent: 59 },
+                    { letter: "FX", point: 0, minPercent: 40, maxPercent: 49 },
+                    { letter: "F", point: 0, minPercent: 0, maxPercent: 39 }
+                ]
+            },
+            china4: {
+                id: "china4",
+                name: "China (Common 4.00 Scale)",
+                maxGPA: 4.0,
+                passing: 1.0,
+                grades: [
+                    { letter: "A", point: 4.00, minPercent: 90, maxPercent: 100 },
+                    { letter: "A-", point: 3.70, minPercent: 85, maxPercent: 89 },
+                    { letter: "B+", point: 3.30, minPercent: 82, maxPercent: 84 },
+                    { letter: "B", point: 3.00, minPercent: 78, maxPercent: 81 },
+                    { letter: "B-", point: 2.70, minPercent: 75, maxPercent: 77 },
+                    { letter: "C+", point: 2.30, minPercent: 72, maxPercent: 74 },
+                    { letter: "C", point: 2.00, minPercent: 68, maxPercent: 71 },
+                    { letter: "C-", point: 1.70, minPercent: 64, maxPercent: 67 },
+                    { letter: "D", point: 1.00, minPercent: 60, maxPercent: 63 },
+                    { letter: "F", point: 0.00, minPercent: 0, maxPercent: 59 }
+                ]
+            },
+            korea43: {
+                id: "korea43",
+                name: "South Korea (4.30 Scale)",
+                maxGPA: 4.3,
+                passing: 1.0,
+                grades: [
+                    { letter: "A+", point: 4.30, minPercent: 95, maxPercent: 100 },
+                    { letter: "A0", point: 4.00, minPercent: 90, maxPercent: 94 },
+                    { letter: "A-", point: 3.70, minPercent: 85, maxPercent: 89 },
+                    { letter: "B+", point: 3.30, minPercent: 80, maxPercent: 84 },
+                    { letter: "B0", point: 3.00, minPercent: 75, maxPercent: 79 },
+                    { letter: "B-", point: 2.70, minPercent: 70, maxPercent: 74 },
+                    { letter: "C+", point: 2.30, minPercent: 65, maxPercent: 69 },
+                    { letter: "C0", point: 2.00, minPercent: 60, maxPercent: 64 },
+                    { letter: "C-", point: 1.70, minPercent: 55, maxPercent: 59 },
+                    { letter: "D+", point: 1.30, minPercent: 50, maxPercent: 54 },
+                    { letter: "D0", point: 1.00, minPercent: 45, maxPercent: 49 },
+                    { letter: "F", point: 0.00, minPercent: 0, maxPercent: 44 }
+                ]
+            },
+            malaysia4: {
+                id: "malaysia4",
+                name: "Malaysia (4.00 Scale)",
+                maxGPA: 4.0,
+                passing: 1.0,
+                grades: [
+                    { letter: "A+", point: 4.00, minPercent: 90, maxPercent: 100 },
+                    { letter: "A", point: 4.00, minPercent: 80, maxPercent: 89 },
+                    { letter: "A-", point: 3.70, minPercent: 75, maxPercent: 79 },
+                    { letter: "B+", point: 3.30, minPercent: 70, maxPercent: 74 },
+                    { letter: "B", point: 3.00, minPercent: 65, maxPercent: 69 },
+                    { letter: "B-", point: 2.70, minPercent: 60, maxPercent: 64 },
+                    { letter: "C+", point: 2.30, minPercent: 55, maxPercent: 59 },
+                    { letter: "C", point: 2.00, minPercent: 50, maxPercent: 54 },
+                    { letter: "C-", point: 1.70, minPercent: 45, maxPercent: 49 },
+                    { letter: "D+", point: 1.30, minPercent: 40, maxPercent: 44 },
+                    { letter: "D", point: 1.00, minPercent: 35, maxPercent: 39 },
+                    { letter: "F", point: 0.00, minPercent: 0, maxPercent: 34 }
+                ]
+            },
+            custom: {
+                id: "custom",
+                name: "Custom Grading System",
+                maxGPA: 4.0,
+                passing: 2.0,
+                grades: []
+            }
+        };
+
+        // ============================================================
+        // CONVERTER FUNCTIONS
+        // ============================================================
+        function convertCourseGrade(grade, fromSystem, toSystem, credit = 1) {
+            const fromScale = gradingSystems[fromSystem];
+            const toScale = gradingSystems[toSystem];
             
-            // Check if converter.js loaded
-            if (typeof convertCGPA === 'undefined' && typeof convertResult === 'undefined') {
-                console.warn('converter.js not loaded, using fallback converter');
-                
-                // Define converter functions
-                window.convertCGPA = function(cgpa, fromSystem, toSystem) {
-                    const GRADING_SYSTEMS = {
-                        'Bangladesh (5.00 Scale)': {
-                            'A+': 5.00, 'A': 4.50, 'A-': 4.00,
-                            'B+': 3.50, 'B': 3.00, 'B-': 2.50,
-                            'C+': 2.00, 'C': 1.50, 'D': 1.00, 'F': 0.00
-                        },
-                        'Bangladesh (4.00 Scale)': {
-                            'A+': 4.00, 'A': 3.75, 'A-': 3.50,
-                            'B+': 3.25, 'B': 3.00, 'B-': 2.75,
-                            'C+': 2.50, 'C': 2.25, 'D': 2.00, 'F': 0.00
-                        },
-                        'India (10.00 Scale)': {
-                            'O': 10.0, 'A+': 9.0, 'A': 8.0,
-                            'B+': 7.0, 'B': 6.0, 'C': 5.0,
-                            'D': 4.0, 'F': 0.0
-                        },
-                        'Pakistan (4.00 Scale)': {
-                            'A+': 4.00, 'A': 3.70, 'A-': 3.30,
-                            'B+': 3.00, 'B': 2.70, 'B-': 2.30,
-                            'C+': 2.00, 'C': 1.70, 'C-': 1.30,
-                            'D': 1.00, 'F': 0.00
-                        },
-                        'United States (4.00 Scale)': {
-                            'A+': 4.00, 'A': 4.00, 'A-': 3.70,
-                            'B+': 3.30, 'B': 3.00, 'B-': 2.70,
-                            'C+': 2.30, 'C': 2.00, 'C-': 1.70,
-                            'D+': 1.30, 'D': 1.00, 'F': 0.00
-                        },
-                        'United Kingdom': {
-                            'First': 4.00, 'Upper Second': 3.50, 'Lower Second': 3.00,
-                            'Third': 2.00, 'Pass': 1.00, 'Fail': 0.00
-                        },
-                        'Europe (ECTS)': {
-                            'A': 5.00, 'B': 4.00, 'C': 3.00,
-                            'D': 2.00, 'E': 1.00, 'F': 0.00
-                        },
-                        'China (Common 4.00 Scale)': {
-                            'A+': 4.00, 'A': 3.70, 'A-': 3.30,
-                            'B+': 3.00, 'B': 2.70, 'B-': 2.30,
-                            'C+': 2.00, 'C': 1.70, 'C-': 1.30,
-                            'D+': 1.00, 'D': 0.70, 'F': 0.00
-                        },
-                        'South Korea (4.30 Scale)': {
-                            'A+': 4.30, 'A0': 4.00, 'A-': 3.70,
-                            'B+': 3.30, 'B0': 3.00, 'B-': 2.70,
-                            'C+': 2.30, 'C0': 2.00, 'C-': 1.70,
-                            'D+': 1.30, 'D0': 1.00, 'F': 0.00
-                        },
-                        'Malaysia (4.00 Scale)': {
-                            'A+': 4.00, 'A': 3.70, 'A-': 3.30,
-                            'B+': 3.00, 'B': 2.70, 'B-': 2.30,
-                            'C+': 2.00, 'C': 1.70, 'C-': 1.30,
-                            'D+': 1.00, 'D': 0.70, 'F': 0.00
-                        },
-                        'Custom Grading System': {
-                            'A+': 4.00, 'A': 3.70, 'A-': 3.30,
-                            'B+': 3.00, 'B': 2.70, 'B-': 2.30,
-                            'C+': 2.00, 'C': 1.70, 'C-': 1.30,
-                            'D+': 1.00, 'D': 0.70, 'F': 0.00
-                        }
-                    };
-
-                    const fromScale = GRADING_SYSTEMS[fromSystem];
-                    const toScale = GRADING_SYSTEMS[toSystem];
-                    
-                    if (!fromScale || !toScale) return cgpa;
-
-                    // Get all grade points
-                    const fromGrades = Object.values(fromScale);
-                    const toGrades = Object.values(toScale);
-                    
-                    // Find closest match in target scale
-                    let converted = 0;
-                    let minDiff = Infinity;
-                    
-                    toGrades.forEach(targetGp => {
-                        fromGrades.forEach(fromGp => {
-                            const diff = Math.abs(cgpa - fromGp);
-                            if (diff < minDiff) {
-                                minDiff = diff;
-                                converted = targetGp;
-                            }
-                        });
-                    });
-
-                    // If no match found (cgpa is 0), use proportional
-                    if (converted === 0 && cgpa > 0) {
-                        const fromMax = Math.max(...fromGrades);
-                        const toMax = Math.max(...toGrades);
-                        converted = (cgpa / fromMax) * toMax;
-                    }
-
-                    return Math.round(converted * 100) / 100;
-                };
+            if (!fromScale || !toScale) {
+                return { originalGrade: grade, convertedGrade: grade, percentage: null };
             }
 
-            // Check if app.js loaded
-            if (typeof init === 'undefined') {
-                console.warn('app.js not loaded, using fallback init');
+            const fromGrade = fromScale.grades.find(g => g.letter === grade);
+            if (!fromGrade) {
+                return { originalGrade: grade, convertedGrade: grade, percentage: null };
+            }
+
+            // STEP 1: Get UPPER BOUND percentage (maxPercent)
+            const percentage = fromGrade.maxPercent;
+            
+            // STEP 2: Find target grade based on this percentage
+            let targetGrade = null;
+            let targetPoint = 0;
+            
+            // First try exact range match
+            for (const g of toScale.grades) {
+                if (percentage >= g.minPercent && percentage <= g.maxPercent) {
+                    targetGrade = g.letter;
+                    targetPoint = g.point;
+                    break;
+                }
+            }
+            
+            // If no exact range match, find closest by maxPercent
+            if (!targetGrade) {
+                let minDiff = Infinity;
+                for (const g of toScale.grades) {
+                    const diff = Math.abs(percentage - g.maxPercent);
+                    if (diff < minDiff) {
+                        minDiff = diff;
+                        targetGrade = g.letter;
+                        targetPoint = g.point;
+                    }
+                }
+            }
+            
+            return {
+                originalGrade: grade,
+                convertedGrade: targetGrade,
+                percentage: percentage,
+                fromGradePoint: fromGrade.point,
+                toGradePoint: targetPoint,
+                credit: credit
+            };
+        }
+
+        function convertCGPA(cgpa, fromSystem, toSystem, courses = null) {
+            if (courses && courses.length > 0) {
+                let totalPoints = 0;
+                let totalCredits = 0;
                 
-                // Basic grading systems
-                const GRADING_SYSTEMS = {
-                    'Bangladesh (5.00 Scale)': {
-                        'A+': 5.00, 'A': 4.50, 'A-': 4.00,
-                        'B+': 3.50, 'B': 3.00, 'B-': 2.50,
-                        'C+': 2.00, 'C': 1.50, 'D': 1.00, 'F': 0.00
-                    },
-                    'Bangladesh (4.00 Scale)': {
-                        'A+': 4.00, 'A': 3.75, 'A-': 3.50,
-                        'B+': 3.25, 'B': 3.00, 'B-': 2.75,
-                        'C+': 2.50, 'C': 2.25, 'D': 2.00, 'F': 0.00
-                    },
-                    'India (10.00 Scale)': {
-                        'O': 10.0, 'A+': 9.0, 'A': 8.0,
-                        'B+': 7.0, 'B': 6.0, 'C': 5.0,
-                        'D': 4.0, 'F': 0.0
-                    },
-                    'Pakistan (4.00 Scale)': {
-                        'A+': 4.00, 'A': 3.70, 'A-': 3.30,
-                        'B+': 3.00, 'B': 2.70, 'B-': 2.30,
-                        'C+': 2.00, 'C': 1.70, 'C-': 1.30,
-                        'D': 1.00, 'F': 0.00
-                    },
-                    'United States (4.00 Scale)': {
-                        'A+': 4.00, 'A': 4.00, 'A-': 3.70,
-                        'B+': 3.30, 'B': 3.00, 'B-': 2.70,
-                        'C+': 2.30, 'C': 2.00, 'C-': 1.70,
-                        'D+': 1.30, 'D': 1.00, 'F': 0.00
-                    },
-                    'United Kingdom': {
-                        'First': 4.00, 'Upper Second': 3.50, 'Lower Second': 3.00,
-                        'Third': 2.00, 'Pass': 1.00, 'Fail': 0.00
-                    },
-                    'Europe (ECTS)': {
-                        'A': 5.00, 'B': 4.00, 'C': 3.00,
-                        'D': 2.00, 'E': 1.00, 'F': 0.00
-                    },
-                    'China (Common 4.00 Scale)': {
-                        'A+': 4.00, 'A': 3.70, 'A-': 3.30,
-                        'B+': 3.00, 'B': 2.70, 'B-': 2.30,
-                        'C+': 2.00, 'C': 1.70, 'C-': 1.30,
-                        'D+': 1.00, 'D': 0.70, 'F': 0.00
-                    },
-                    'South Korea (4.30 Scale)': {
-                        'A+': 4.30, 'A0': 4.00, 'A-': 3.70,
-                        'B+': 3.30, 'B0': 3.00, 'B-': 2.70,
-                        'C+': 2.30, 'C0': 2.00, 'C-': 1.70,
-                        'D+': 1.30, 'D0': 1.00, 'F': 0.00
-                    },
-                    'Malaysia (4.00 Scale)': {
-                        'A+': 4.00, 'A': 3.70, 'A-': 3.30,
-                        'B+': 3.00, 'B': 2.70, 'B-': 2.30,
-                        'C+': 2.00, 'C': 1.70, 'C-': 1.30,
-                        'D+': 1.00, 'D': 0.70, 'F': 0.00
-                    },
-                    'Custom Grading System': {
-                        'A+': 4.00, 'A': 3.70, 'A-': 3.30,
-                        'B+': 3.00, 'B': 2.70, 'B-': 2.30,
-                        'C+': 2.00, 'C': 1.70, 'C-': 1.30,
-                        'D+': 1.00, 'D': 0.70, 'F': 0.00
+                courses.forEach(course => {
+                    const converted = convertCourseGrade(course.grade, fromSystem, toSystem, course.credit || 1);
+                    totalPoints += converted.toGradePoint * (course.credit || 1);
+                    totalCredits += (course.credit || 1);
+                });
+                
+                return totalCredits === 0 ? 0 : Math.round((totalPoints / totalCredits) * 100) / 100;
+            }
+            
+            // Fallback: Direct conversion using percentage
+            const fromScale = gradingSystems[fromSystem];
+            const toScale = gradingSystems[toSystem];
+            
+            if (!fromScale || !toScale) return cgpa;
+            
+            let percentage = 0;
+            for (const g of fromScale.grades) {
+                if (Math.abs(g.point - cgpa) < 0.01) {
+                    percentage = g.maxPercent;
+                    break;
+                }
+            }
+            
+            if (percentage === 0) return cgpa;
+            
+            let targetPoint = 0;
+            for (const g of toScale.grades) {
+                if (percentage >= g.minPercent && percentage <= g.maxPercent) {
+                    targetPoint = g.point;
+                    break;
+                }
+            }
+            
+            if (targetPoint === 0) {
+                let minDiff = Infinity;
+                for (const g of toScale.grades) {
+                    const diff = Math.abs(percentage - g.maxPercent);
+                    if (diff < minDiff) {
+                        minDiff = diff;
+                        targetPoint = g.point;
                     }
-                };
-
-                let currentGrading = 'Bangladesh (5.00 Scale)';
-                let gradeMap = GRADING_SYSTEMS[currentGrading];
-                let semesters = [];
-                let creditMode = 'equal';
-                let semesterCounter = 0;
-
-                function getGradePoint(grade) {
-                    return gradeMap[grade] !== undefined ? gradeMap[grade] : 0;
                 }
+            }
+            
+            return Math.round(targetPoint * 100) / 100;
+        }
 
-                function calculateGPA(courses) {
-                    if (!courses || courses.length === 0) return 0;
-                    let totalPoints = 0, totalCredits = 0;
-                    courses.forEach(c => {
-                        let cr = creditMode === 'equal' ? 1 : (parseFloat(c.credit) || 1);
-                        let gp = getGradePoint(c.grade);
-                        totalPoints += gp * cr;
-                        totalCredits += cr;
-                    });
-                    return totalCredits === 0 ? 0 : (totalPoints / totalCredits);
-                }
+        // ============================================================
+        // APP STATE
+        // ============================================================
+        let semesters = [];
+        let currentGradingSystem = 'bd4';
+        let creditMode = 'equal';
+        let semesterCounter = 0;
+        let pieChartInstance = null;
+        let lineChartInstance = null;
 
-                function calculateCGPA() {
-                    let totalPoints = 0, totalCredits = 0;
-                    semesters.forEach(sem => {
-                        (sem.courses || []).forEach(c => {
-                            let cr = creditMode === 'equal' ? 1 : (parseFloat(c.credit) || 1);
-                            let gp = getGradePoint(c.grade);
-                            totalPoints += gp * cr;
-                            totalCredits += cr;
-                        });
-                    });
-                    return totalCredits === 0 ? 0 : (totalPoints / totalCredits);
-                }
+        // ============================================================
+        // APP FUNCTIONS
+        // ============================================================
+        function init() {
+            const select = document.getElementById('grading-system');
+            if (select) {
+                select.innerHTML = '';
+                Object.keys(gradingSystems).forEach(key => {
+                    const opt = document.createElement('option');
+                    opt.value = key;
+                    opt.textContent = gradingSystems[key].name;
+                    select.appendChild(opt);
+                });
+                select.value = currentGradingSystem;
+                select.addEventListener('change', changeGradingSystem);
+            }
 
-                function totalCreditsAll() {
-                    let sum = 0;
-                    semesters.forEach(sem => {
-                        (sem.courses || []).forEach(c => {
-                            sum += creditMode === 'equal' ? 1 : (parseFloat(c.credit) || 1);
-                        });
-                    });
-                    return sum;
-                }
+            loadState();
+            renderSemesters();
+            updateSummary();
+            populateConvertTarget();
+        }
 
-                function renderSemesters() {
-                    const container = document.getElementById('semesters-container');
-                    if (!container) return;
-                    container.innerHTML = '';
-                    semesters.forEach((sem, idx) => {
-                        const div = document.createElement('div');
-                        div.className = 'bg-white dark:bg-gray-900 rounded-3xl p-5 border border-gray-200 dark:border-gray-700';
-                        div.dataset.index = idx;
-                        div.innerHTML = `
-                            <div class="flex items-center justify-between mb-4">
-                                <div class="flex items-center gap-3">
-                                    <i class="fas fa-grip-vertical text-gray-400 cursor-grab handle"></i>
-                                    <span class="font-semibold">Semester ${idx+1}</span>
-                                    <input type="text" value="${sem.name || ''}" placeholder="e.g. Fall 2026" 
-                                           class="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-1 text-sm w-36 focus:outline-none focus:border-blue-500">
-                                </div>
-                                <div class="flex gap-2">
-                                    <span class="text-sm text-gray-500">GPA: <strong>${calculateGPA(sem.courses).toFixed(2)}</strong></span>
-                                    <button onclick="removeSemester(${idx})" class="text-gray-400 hover:text-red-500"><i class="fas fa-trash"></i></button>
-                                </div>
+        function changeGradingSystem() {
+            currentGradingSystem = document.getElementById('grading-system').value;
+            renderSemesters();
+            updateSummary();
+            populateConvertTarget();
+            updateCharts();
+            saveState();
+        }
+
+        function setCreditMode(mode) {
+            creditMode = mode;
+            document.getElementById('equal-btn').className = `flex-1 py-4 rounded-2xl border-2 font-medium transition-all ${mode === 'equal' ? 'border-blue-500 text-blue-600' : 'border-gray-300 dark:border-gray-600'}`;
+            document.getElementById('variable-btn').className = `flex-1 py-4 rounded-2xl border-2 font-medium transition-all ${mode === 'variable' ? 'border-blue-500 text-blue-600' : 'border-gray-300 dark:border-gray-600'}`;
+            renderSemesters();
+            saveState();
+        }
+
+        function addSemester() {
+            semesters.push({
+                id: semesterCounter++,
+                name: `Semester ${semesters.length + 1}`,
+                courses: []
+            });
+            renderSemesters();
+            updateSummary();
+            updateCharts();
+            saveState();
+        }
+
+        function removeSemester(index) {
+            if (semesters.length <= 1) {
+                showToast('At least one semester required');
+                return;
+            }
+            semesters.splice(index, 1);
+            renderSemesters();
+            updateSummary();
+            updateCharts();
+            saveState();
+        }
+
+        function addCourse(semIndex) {
+            if (!semesters[semIndex]) return;
+            const scale = gradingSystems[currentGradingSystem];
+            const firstGrade = scale.grades.length > 0 ? scale.grades[0].letter : 'A';
+            semesters[semIndex].courses.push({
+                name: 'New Course',
+                grade: firstGrade,
+                credit: 3
+            });
+            renderSemesters();
+            updateSummary();
+            updateCharts();
+            saveState();
+        }
+
+        function removeCourse(semIndex, courseIndex) {
+            if (!semesters[semIndex]) return;
+            semesters[semIndex].courses.splice(courseIndex, 1);
+            renderSemesters();
+            updateSummary();
+            updateCharts();
+            saveState();
+        }
+
+        function renderSemesters() {
+            const container = document.getElementById('semesters-container');
+            if (!container) return;
+            
+            container.innerHTML = '';
+            semesters.forEach((sem, semIdx) => {
+                const div = document.createElement('div');
+                div.className = 'bg-white dark:bg-gray-900 rounded-3xl p-5 border border-gray-200 dark:border-gray-700';
+                const semGPA = calculateSemesterGPA(sem.courses);
+                
+                div.innerHTML = `
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-3">
+                            <i class="fas fa-grip-vertical text-gray-400 cursor-grab handle"></i>
+                            <span class="font-semibold">${sem.name}</span>
+                            <input type="text" value="${sem.name}" 
+                                   class="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-1 text-sm w-36 focus:outline-none focus:border-blue-500"
+                                   onchange="updateSemesterName(${semIdx}, this.value)">
+                        </div>
+                        <div class="flex gap-2">
+                            <span class="text-sm text-gray-500">GPA: <strong>${semGPA.toFixed(2)}</strong></span>
+                            <button onclick="removeSemester(${semIdx})" class="text-gray-400 hover:text-red-500"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                    <div class="space-y-3">
+                        ${sem.courses.map((course, cIdx) => `
+                            <div class="flex items-center gap-3">
+                                <input type="text" value="${course.name}" 
+                                       class="flex-1 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+                                       onchange="updateCourseName(${semIdx}, ${cIdx}, this.value)">
+                                <select class="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-sm focus:outline-none grade-select"
+                                        onchange="updateCourseGrade(${semIdx}, ${cIdx}, this.value)">
+                                    ${gradingSystems[currentGradingSystem].grades.map(g => 
+                                        `<option value="${g.letter}" ${course.grade === g.letter ? 'selected' : ''}>${g.letter} (${g.point})</option>`
+                                    ).join('')}
+                                </select>
+                                ${creditMode === 'variable' ? `
+                                    <input type="number" value="${course.credit || 3}" min="0.5" step="0.5" 
+                                           class="w-16 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-2 py-2 text-sm focus:outline-none credit-input"
+                                           onchange="updateCourseCredit(${semIdx}, ${cIdx}, this.value)">
+                                ` : ''}
+                                <button onclick="removeCourse(${semIdx}, ${cIdx})" class="text-gray-400 hover:text-red-500"><i class="fas fa-times"></i></button>
                             </div>
-                            <div class="space-y-3">
-                                ${(sem.courses || []).map((c, ci) => `
-                                    <div class="flex items-center gap-3 course-row" data-sem="${idx}" data-ci="${ci}">
-                                        <input type="text" value="${c.name || ''}" placeholder="Course" class="flex-1 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500">
-                                        <select class="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-sm focus:outline-none grade-select">
-                                            ${Object.keys(gradeMap).map(g => `<option value="${g}" ${c.grade===g?'selected':''}>${g}</option>`).join('')}
-                                        </select>
-                                        ${creditMode === 'variable' ? `<input type="number" value="${c.credit || 1}" min="0.5" step="0.5" class="w-16 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-2 py-2 text-sm focus:outline-none credit-input">` : ''}
-                                        <button onclick="removeCourse(${idx}, ${ci})" class="text-gray-400 hover:text-red-500"><i class="fas fa-times"></i></button>
-                                    </div>
-                                `).join('')}
-                            </div>
-                            <button onclick="addCourse(${idx})" class="mt-3 text-sm text-gray-500 hover:text-blue-600 flex items-center gap-2"><i class="fas fa-plus"></i> Add course</button>
-                        `;
-                        container.appendChild(div);
-                    });
-
-                    document.querySelectorAll('.course-row').forEach(row => {
-                        const semIdx = parseInt(row.dataset.sem);
-                        const ci = parseInt(row.dataset.ci);
-                        const nameInput = row.querySelector('input[type="text"]');
-                        const gradeSelect = row.querySelector('.grade-select');
-                        const creditInput = row.querySelector('.credit-input');
-                        if (nameInput) {
-                            nameInput.addEventListener('change', function() {
-                                if (semesters[semIdx] && semesters[semIdx].courses[ci]) {
-                                    semesters[semIdx].courses[ci].name = this.value;
-                                    saveState(); updateSummary();
-                                }
-                            });
-                        }
-                        if (gradeSelect) {
-                            gradeSelect.addEventListener('change', function() {
-                                if (semesters[semIdx] && semesters[semIdx].courses[ci]) {
-                                    semesters[semIdx].courses[ci].grade = this.value;
-                                    saveState(); updateSummary(); renderSemesters();
-                                }
-                            });
-                        }
-                        if (creditInput) {
-                            creditInput.addEventListener('change', function() {
-                                if (semesters[semIdx] && semesters[semIdx].courses[ci]) {
-                                    semesters[semIdx].courses[ci].credit = parseFloat(this.value) || 1;
-                                    saveState(); updateSummary(); renderSemesters();
-                                }
-                            });
-                        }
-                    });
-
-                    container.querySelectorAll('.bg-white, .bg-gray-900').forEach((semDiv, idx) => {
-                        const nameInput = semDiv.querySelector('input[type="text"]');
-                        if (nameInput && semesters[idx]) {
-                            nameInput.value = semesters[idx].name || '';
-                            nameInput.addEventListener('change', function() {
-                                semesters[idx].name = this.value;
-                                saveState();
-                            });
-                        }
-                    });
-
-                    updateSummary();
-                    saveState();
-                }
-
-                function updateSummary() {
-                    const cgpa = calculateCGPA();
-                    document.getElementById('cgpa-display').textContent = cgpa.toFixed(2);
-                    document.getElementById('total-credits').textContent = totalCreditsAll();
-                    document.getElementById('current-cgpa-display').textContent = cgpa.toFixed(2);
-                    document.getElementById('current-scale-display').textContent = currentGrading;
-                }
-
-                function addSemester() {
-                    semesters.push({ id: semesterCounter++, name: `Sem ${semesters.length+1}`, courses: [] });
-                    renderSemesters();
-                }
-
-                function removeSemester(idx) {
-                    if (semesters.length <= 1) { showToast('At least one semester needed'); return; }
-                    semesters.splice(idx, 1);
-                    renderSemesters();
-                }
-
-                function addCourse(semIdx) {
-                    if (!semesters[semIdx]) return;
-                    const firstGrade = Object.keys(gradeMap)[0] || 'A';
-                    semesters[semIdx].courses.push({ name: 'New course', grade: firstGrade, credit: 1 });
-                    renderSemesters();
-                }
-
-                function removeCourse(semIdx, ci) {
-                    if (!semesters[semIdx]) return;
-                    semesters[semIdx].courses.splice(ci, 1);
-                    renderSemesters();
-                }
-
-                function changeGradingSystem() {
-                    const sel = document.getElementById('grading-system');
-                    currentGrading = sel.value;
-                    gradeMap = GRADING_SYSTEMS[currentGrading] || GRADING_SYSTEMS['Bangladesh (5.00 Scale)'];
-                    renderSemesters();
-                    saveState();
-                    populateConvertTarget();
-                    updateSummary();
-                }
-
-                function setCreditMode(mode) {
-                    creditMode = mode;
-                    document.getElementById('equal-btn').className = `flex-1 py-4 rounded-2xl border-2 font-medium transition-all ${mode==='equal' ? 'border-blue-500 text-blue-600' : 'border-gray-300 dark:border-gray-600'}`;
-                    document.getElementById('variable-btn').className = `flex-1 py-4 rounded-2xl border-2 font-medium transition-all ${mode==='variable' ? 'border-blue-500 text-blue-600' : 'border-gray-300 dark:border-gray-600'}`;
-                    renderSemesters();
-                    saveState();
-                }
-
-                // ============================================================
-                // CONVERSION - Using converter.js or fallback
-                // ============================================================
-                function convertResult() {
-                    const currentCGPA = calculateCGPA();
-                    const targetSystem = document.getElementById('convert-target').value;
-                    
-                    if (!targetSystem) {
-                        showToast('Please select a target grading system');
-                        return;
-                    }
-
-                    let convertedCGPA;
-                    
-                    // Try to use converter.js if available
-                    if (typeof convertCGPA === 'function') {
-                        try {
-                            convertedCGPA = convertCGPA(currentCGPA, currentGrading, targetSystem);
-                        } catch(e) {
-                            console.warn('convertCGPA failed, using fallback', e);
-                            convertedCGPA = null;
-                        }
-                    }
-                    
-                    // Fallback if converter.js not available or failed
-                    if (convertedCGPA === undefined || convertedCGPA === null) {
-                        const targetScale = GRADING_SYSTEMS[targetSystem];
-                        if (!targetScale) {
-                            showToast('Target grading system not found');
-                            return;
-                        }
-
-                        const fromGrades = Object.values(gradeMap);
-                        const toGrades = Object.values(targetScale);
-                        
-                        let converted = 0;
-                        let minDiff = Infinity;
-                        
-                        toGrades.forEach(targetGp => {
-                            fromGrades.forEach(fromGp => {
-                                const diff = Math.abs(currentCGPA - fromGp);
-                                if (diff < minDiff) {
-                                    minDiff = diff;
-                                    converted = targetGp;
-                                }
-                            });
-                        });
-
-                        if (converted === 0 && currentCGPA > 0) {
-                            const fromMax = Math.max(...fromGrades);
-                            const toMax = Math.max(...toGrades);
-                            converted = (currentCGPA / fromMax) * toMax;
-                        }
-
-                        convertedCGPA = Math.round(converted * 100) / 100;
-                    }
-
-                    document.getElementById('converted-cgpa').textContent = convertedCGPA.toFixed(2);
-                    document.getElementById('target-scale-name').textContent = targetSystem;
-                    document.getElementById('conversion-result').classList.remove('hidden');
-                    
-                    showToast(`Converted to ${targetSystem}: ${convertedCGPA.toFixed(2)}`);
-                }
-
-                function saveState() {
-                    try {
-                        const data = { semesters, creditMode, currentGrading };
-                        localStorage.setItem('marsCalState', JSON.stringify(data));
-                    } catch(e) {}
-                }
-
-                function loadState() {
-                    try {
-                        const raw = localStorage.getItem('marsCalState');
-                        if (!raw) return false;
-                        const data = JSON.parse(raw);
-                        if (data.semesters) semesters = data.semesters;
-                        if (data.creditMode) creditMode = data.creditMode;
-                        if (data.currentGrading) {
-                            currentGrading = data.currentGrading;
-                            gradeMap = GRADING_SYSTEMS[currentGrading] || GRADING_SYSTEMS['Bangladesh (5.00 Scale)'];
-                        }
-                        return true;
-                    } catch(e) { return false; }
-                }
-
-                function populateConvertTarget() {
-                    const targetSelect = document.getElementById('convert-target');
-                    if (!targetSelect) return;
-                    targetSelect.innerHTML = '';
-                    Object.keys(GRADING_SYSTEMS).forEach(key => {
-                        if (key !== currentGrading) {
-                            const option = document.createElement('option');
-                            option.value = key;
-                            option.textContent = key;
-                            targetSelect.appendChild(option);
-                        }
-                    });
-                    if (targetSelect.options.length === 0) {
-                        const option = document.createElement('option');
-                        option.value = '';
-                        option.textContent = 'No other systems available';
-                        targetSelect.appendChild(option);
-                    }
-                }
-
-                function showTab(idx) {
-                    document.querySelectorAll('.tab-content').forEach((el, i) => {
-                        el.classList.toggle('hidden', i !== idx);
-                    });
-                    document.querySelectorAll('.tab-btn').forEach((btn, i) => {
-                        btn.classList.toggle('active', i === idx);
-                    });
-                    if (idx === 2) {
-                        populateConvertTarget();
+                        `).join('')}
+                    </div>
+                    <button onclick="addCourse(${semIdx})" class="mt-3 text-sm text-gray-500 hover:text-blue-600 flex items-center gap-2">
+                        <i class="fas fa-plus"></i> Add Course
+                    </button>
+                `;
+                container.appendChild(div);
+            });
+            
+            // Initialize Sortable for drag reorder
+            if (typeof Sortable !== 'undefined') {
+                Sortable.create(container, {
+                    handle: '.handle',
+                    animation: 200,
+                    onEnd: function(evt) {
+                        const [removed] = semesters.splice(evt.oldIndex, 1);
+                        semesters.splice(evt.newIndex, 0, removed);
+                        renderSemesters();
                         updateSummary();
+                        updateCharts();
+                        saveState();
                     }
-                }
-
-                function toggleTheme() {
-                    document.body.classList.toggle('dark');
-                    const icon = document.querySelector('#theme-toggle i');
-                    if (document.body.classList.contains('dark')) {
-                        icon.className = 'fas fa-sun text-xl';
-                    } else {
-                        icon.className = 'fas fa-moon text-xl';
-                    }
-                }
-
-                function exportToPDF() {
-                    showToast('PDF export ready');
-                }
-
-                function showToast(msg) {
-                    const t = document.getElementById('toast');
-                    t.innerHTML = `<i class="fas fa-info-circle"></i> ${msg}`;
-                    t.classList.remove('hidden');
-                    clearTimeout(t._hide);
-                    t._hide = setTimeout(() => t.classList.add('hidden'), 2500);
-                }
-
-                function init() {
-                    const sel = document.getElementById('grading-system');
-                    sel.innerHTML = Object.keys(GRADING_SYSTEMS).map(k => `<option value="${k}">${k}</option>`).join('');
-                    sel.value = currentGrading;
-
-                    const loaded = loadState();
-                    if (!loaded) {
-                        semesters = [
-                            { id: semesterCounter++, name: 'Fall 2025', courses: [{ name: 'Math', grade: 'A', credit: 3 }, { name: 'Physics', grade: 'B+', credit: 3 }] },
-                            { id: semesterCounter++, name: 'Spring 2026', courses: [{ name: 'Chemistry', grade: 'A-', credit: 3 }, { name: 'Biology', grade: 'B', credit: 3 }] }
-                        ];
-                    }
-                    semesters.forEach(sem => {
-                        (sem.courses || []).forEach(c => { if (c.credit === undefined) c.credit = 1; });
-                    });
-
-                    setCreditMode(creditMode);
-                    renderSemesters();
-                    populateConvertTarget();
-                    updateSummary();
-
-                    const container = document.getElementById('semesters-container');
-                    if (container && typeof Sortable !== 'undefined') {
-                        Sortable.create(container, {
-                            handle: '.handle',
-                            animation: 200,
-                            onEnd: function(evt) {
-                                const [removed] = semesters.splice(evt.oldIndex, 1);
-                                semesters.splice(evt.newIndex, 0, removed);
-                                renderSemesters();
-                                saveState();
-                            }
-                        });
-                    }
-
-                    sel.addEventListener('change', changeGradingSystem);
-                }
-
-                // Make functions global
-                window.addSemester = addSemester;
-                window.removeSemester = removeSemester;
-                window.addCourse = addCourse;
-                window.removeCourse = removeCourse;
-                window.changeGradingSystem = changeGradingSystem;
-                window.setCreditMode = setCreditMode;
-                window.showTab = showTab;
-                window.exportToPDF = exportToPDF;
-                window.toggleTheme = toggleTheme;
-                window.convertResult = convertResult;
-
-                init();
+                });
             }
-        });
+            
+            updateSummary();
+            updateCharts();
+        }
+
+        function calculateSemesterGPA(courses) {
+            if (!courses || courses.length === 0) return 0;
+            const scale = gradingSystems[currentGradingSystem];
+            let totalPoints = 0, totalCredits = 0;
+            courses.forEach(course => {
+                const gradeData = scale.grades.find(g => g.letter === course.grade);
+                if (gradeData) {
+                    const credit = creditMode === 'equal' ? 1 : (course.credit || 3);
+                    totalPoints += gradeData.point * credit;
+                    totalCredits += credit;
+                }
+            });
+            return totalCredits === 0 ? 0 : Math.round((totalPoints / totalCredits) * 100) / 100;
+        }
+
+        function calculateCGPA() {
+            let totalPoints = 0, totalCredits = 0;
+            const scale = gradingSystems[currentGradingSystem];
+            semesters.forEach(sem => {
+                sem.courses.forEach(course => {
+                    const gradeData = scale.grades.find(g => g.letter === course.grade);
+                    if (gradeData) {
+                        const credit = creditMode === 'equal' ? 1 : (course.credit || 3);
+                        totalPoints += gradeData.point * credit;
+                        totalCredits += credit;
+                    }
+                });
+            });
+            return totalCredits === 0 ? 0 : Math.round((totalPoints / totalCredits) * 100) / 100;
+        }
+
+        function totalCreditsAll() {
+            let sum = 0;
+            semesters.forEach(sem => {
+                sem.courses.forEach(course => {
+                    sum += creditMode === 'equal' ? 1 : (course.credit || 3);
+                });
+            });
+            return sum;
+        }
+
+        function updateSummary() {
+            const cgpa = calculateCGPA();
+            document.getElementById('cgpa-display').textContent = cgpa.toFixed(2);
+            document.getElementById('total-credits').textContent = totalCreditsAll();
+            document.getElementById('current-cgpa-display').textContent = cgpa.toFixed(2);
+            document.getElementById('current-scale-display').textContent = gradingSystems[currentGradingSystem].name;
+        }
+
+        function populateConvertTarget() {
+            const targetSelect = document.getElementById('convert-target');
+            if (!targetSelect) return;
+            targetSelect.innerHTML = '';
+            Object.keys(gradingSystems).forEach(key => {
+                if (key !== currentGradingSystem) {
+                    const option = document.createElement('option');
+                    option.value = key;
+                    option.textContent = gradingSystems[key].name;
+                    targetSelect.appendChild(option);
+                }
+            });
+        }
+
+        function convertResult() {
+            const cgpa = calculateCGPA();
+            const targetSystem = document.getElementById('convert-target').value;
+            
+            if (!targetSystem) {
+                showToast('Please select a target system');
+                return;
+            }
+            
+            const allCourses = [];
+            semesters.forEach(sem => {
+                sem.courses.forEach(course => {
+                    allCourses.push({
+                        grade: course.grade,
+                        credit: course.credit || 3
+                    });
+                });
+            });
+            
+            const convertedCGPA = convertCGPA(cgpa, currentGradingSystem, targetSystem, allCourses);
+            
+            let detailsHTML = '<div class="mt-2">';
+            allCourses.forEach((course, i) => {
+                const converted = convertCourseGrade(course.grade, currentGradingSystem, targetSystem, course.credit || 1);
+                detailsHTML += `
+                    <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                        Course ${i+1}: ${course.grade} → ${converted.percentage}% → ${converted.convertedGrade}
+                    </div>
+                `;
+            });
+            detailsHTML += '</div>';
+            
+            document.getElementById('converted-cgpa').textContent = convertedCGPA.toFixed(2);
+            document.getElementById('target-scale-name').textContent = gradingSystems[targetSystem].name;
+            document.getElementById('conversion-result').classList.remove('hidden');
+            document.getElementById('conversion-details').innerHTML = detailsHTML;
+            
+            showToast(`Converted to ${gradingSystems[targetSystem].name}: ${convertedCGPA.toFixed(2)}`);
+        }
+
+        function updateSemesterName(index, name) {
+            if (semesters[index]) {
+                semesters[index].name = name;
+                saveState();
+            }
+        }
+
+        function updateCourseName(semIndex, courseIndex, name) {
+            if (semesters[semIndex] && semesters[semIndex].courses[courseIndex]) {
+                semesters[semIndex].courses[courseIndex].name = name;
+                saveState();
+            }
+        }
+
+        function updateCourseGrade(semIndex, courseIndex, grade) {
+            if (semesters[semIndex] && semesters[semIndex].courses[courseIndex]) {
+                semesters[semIndex].courses[courseIndex].grade = grade;
+                renderSemesters();
+                updateSummary();
+                updateCharts();
+                saveState();
+            }
+        }
+
+        function updateCourseCredit(semIndex, courseIndex, credit) {
+            if (semesters[semIndex] && semesters[semIndex].courses[courseIndex]) {
+                semesters[semIndex].courses[courseIndex].credit = parseFloat(credit) || 3;
+                renderSemesters();
+                updateSummary();
+                saveState();
+            }
+        }
+
+        // ============================================================
+        // CHARTS
+        // ============================================================
+        function updateCharts() {
+            // Pie Chart: Grade Distribution
+            const gradeCount = {};
+            semesters.forEach(sem => {
+                sem.courses.forEach(c => {
+                    const g = c.grade || 'A';
+                    gradeCount[g] = (gradeCount[g] || 0) + 1;
+                });
+            });
+            const labels = Object.keys(gradeCount);
+            const data = Object.values(gradeCount);
+            const colors = ['#3b82f6','#8b5cf6','#ec4899','#f59e0b','#10b981','#ef4444','#6366f1','#14b8a6','#f97316'];
+
+            const pieCtx = document.getElementById('pieChart');
+            if (pieCtx) {
+                if (pieChartInstance) pieChartInstance.destroy();
+                if (labels.length > 0) {
+                    pieChartInstance = new Chart(pieCtx, {
+                        type: 'pie',
+                        data: { labels, datasets: [{ data, backgroundColor: colors.slice(0, labels.length), borderColor: '#fff', borderWidth: 2 }] },
+                        options: { responsive: true }
+                    });
+                }
+            }
+
+            // Line Chart: GPA Trend
+            const lineCtx = document.getElementById('lineChart');
+            if (lineCtx) {
+                if (lineChartInstance) lineChartInstance.destroy();
+                const semGpas = semesters.map(sem => calculateSemesterGPA(sem.courses));
+                if (semGpas.length > 0) {
+                    const maxVal = Math.max(4.5, ...semGpas.map(g => g + 0.5));
+                    lineChartInstance = new Chart(lineCtx, {
+                        type: 'line',
+                        data: { 
+                            labels: semesters.map((_,i) => `Sem ${i+1}`), 
+                            datasets: [{ 
+                                label: 'GPA', 
+                                data: semGpas, 
+                                borderColor: '#3b82f6', 
+                                backgroundColor: '#3b82f620', 
+                                fill: true, 
+                                tension: 0.3 
+                            }] 
+                        },
+                        options: { 
+                            responsive: true, 
+                            scales: { y: { min: 0, max: Math.ceil(maxVal) } } 
+                        }
+                    });
+                }
+            }
+        }
+
+        // ============================================================
+        // TABS
+        // ============================================================
+        function showTab(index) {
+            document.querySelectorAll('.tab-content').forEach((el, i) => {
+                el.classList.toggle('hidden', i !== index);
+            });
+            document.querySelectorAll('.tab-btn').forEach((btn, i) => {
+                btn.classList.toggle('active', i === index);
+            });
+            if (index === 1) {
+                setTimeout(updateCharts, 100);
+            }
+            if (index === 2) {
+                populateConvertTarget();
+                updateSummary();
+            }
+        }
+
+        // ============================================================
+        // STORAGE
+        // ============================================================
+        function saveState() {
+            try {
+                const data = { semesters, creditMode, currentGradingSystem };
+                localStorage.setItem('marsCalState', JSON.stringify(data));
+            } catch(e) {}
+        }
+
+        function loadState() {
+            try {
+                const raw = localStorage.getItem('marsCalState');
+                if (!raw) return false;
+                const data = JSON.parse(raw);
+                if (data.semesters) {
+                    semesters = data.semesters;
+                    semesterCounter = semesters.length;
+                }
+                if (data.creditMode) creditMode = data.creditMode;
+                if (data.currentGradingSystem) {
+                    currentGradingSystem = data.currentGradingSystem;
+                    document.getElementById('grading-system').value = currentGradingSystem;
+                }
+                return true;
+            } catch(e) { return false; }
+        }
+
+        // ============================================================
+        // MISC
+        // ============================================================
+        function toggleTheme() {
+            document.body.classList.toggle('dark');
+            const icon = document.querySelector('#theme-toggle i');
+            if (document.body.classList.contains('dark')) {
+                icon.className = 'fas fa-sun text-xl';
+            } else {
+                icon.className = 'fas fa-moon text-xl';
+            }
+        }
+
+        function exportToPDF() {
+            showToast('PDF export ready');
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            if (!toast) return;
+            toast.innerHTML = `<i class="fas fa-info-circle"></i> ${message}`;
+            toast.classList.remove('hidden');
+            clearTimeout(toast._hide);
+            toast._hide = setTimeout(() => toast.classList.add('hidden'), 2500);
+        }
+
+        // ============================================================
+        // MAKE FUNCTIONS GLOBAL
+        // ============================================================
+        window.init = init;
+        window.addSemester = addSemester;
+        window.removeSemester = removeSemester;
+        window.addCourse = addCourse;
+        window.removeCourse = removeCourse;
+        window.changeGradingSystem = changeGradingSystem;
+        window.setCreditMode = setCreditMode;
+        window.showTab = showTab;
+        window.exportToPDF = exportToPDF;
+        window.toggleTheme = toggleTheme;
+        window.convertResult = convertResult;
+        window.updateSemesterName = updateSemesterName;
+        window.updateCourseName = updateCourseName;
+        window.updateCourseGrade = updateCourseGrade;
+        window.updateCourseCredit = updateCourseCredit;
+        window.convertCourseGrade = convertCourseGrade;
+        window.convertCGPA = convertCGPA;
+
+        // ============================================================
+        // START
+        // ============================================================
+        document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
 </html>

@@ -5,6 +5,7 @@
 
 body {
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .glass {
@@ -18,16 +19,31 @@ body {
 
 .tab-btn {
     transition: all 0.3s ease;
+    padding: 12px 24px;
+    font-weight: 500;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    color: #6b7280;
+}
+
+.tab-btn:hover {
+    color: #374151;
+}
+
+.dark .tab-btn:hover {
+    color: #e5e7eb;
 }
 
 .tab-btn.active {
-    border-bottom: 3px solid rgb(37 99 235);
-    color: rgb(37 99 235);
+    border-bottom: 3px solid #3b82f6;
+    color: #3b82f6;
     font-weight: 600;
 }
 
 .course-row {
     transition: all 0.2s ease;
+    border-radius: 8px;
+    padding: 4px 8px;
 }
 
 .course-row:hover {
@@ -40,10 +56,194 @@ body {
 
 input, select {
     transition: all 0.2s ease;
+    background-color: #f9fafb;
+}
+
+.dark input, .dark select {
+    background-color: #1f2937;
+    color: #e5e7eb;
 }
 
 input:focus, select:focus {
+    outline: none;
+    border-color: #3b82f6;
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
 }
 
-/* Print Styles will be in separate file */
+/* Handle (drag icon) */
+.handle {
+    cursor: grab;
+    color: #9ca3af;
+}
+
+.handle:active {
+    cursor: grabbing;
+}
+
+/* Toast animations */
+#toast {
+    animation: slideUp 0.3s ease forwards;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+#toast.hidden {
+    animation: slideDown 0.3s ease forwards;
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+}
+
+/* Semester container animations */
+.semester-enter {
+    animation: fadeIn 0.4s ease forwards;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+    background: #4b5563;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+    background: #6b7280;
+}
+
+/* Print specific styles */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    
+    body {
+        background: white !important;
+        color: black !important;
+    }
+    
+    .bg-white, .dark .bg-white {
+        background: white !important;
+    }
+    
+    .bg-gray-50, .dark .bg-gray-50 {
+        background: #f9fafb !important;
+    }
+    
+    .dark .bg-gray-900 {
+        background: white !important;
+    }
+    
+    .border, .border-gray-200, .dark .border-gray-700 {
+        border-color: #d1d5db !important;
+    }
+    
+    /* Transcript specific print styles */
+    .transcript-page {
+        page-break-after: always;
+        padding: 20mm 15mm !important;
+    }
+    
+    .transcript-page:last-child {
+        page-break-after: avoid;
+    }
+    
+    /* Ensure signatures appear on every page */
+    .signature-section {
+        page-break-inside: avoid;
+    }
+}
+
+/* Dark mode specific */
+.dark .tab-btn {
+    color: #9ca3af;
+}
+
+.dark .tab-btn.active {
+    color: #60a5fa;
+    border-bottom-color: #60a5fa;
+}
+
+.dark .bg-white {
+    background-color: #1f2937;
+}
+
+.dark .border-gray-200 {
+    border-color: #374151;
+}
+
+.dark .text-gray-500 {
+    color: #9ca3af;
+}
+
+.dark .text-gray-600 {
+    color: #d1d5db;
+}
+
+.dark .text-gray-700 {
+    color: #e5e7eb;
+}
+
+.dark .text-gray-900 {
+    color: #f9fafb;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .tab-btn {
+        padding: 8px 12px;
+        font-size: 14px;
+    }
+    
+    .course-row {
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+    
+    .course-row input {
+        min-width: 60px;
+    }
+}

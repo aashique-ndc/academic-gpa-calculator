@@ -1,0 +1,1250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MarsCal - GPA, SGPA & CGPA Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        * { font-family: 'Inter', system-ui, sans-serif; }
+        
+        /* Mars Theme Colors */
+        :root {
+            --mars-primary: #d95a3a;
+            --mars-primary-dark: #b53b2c;
+            --mars-primary-light: #e68a6f;
+            --mars-bg: #1e1614;
+            --mars-card: #2a201c;
+            --mars-border: #4a322a;
+            --mars-text: #eee5de;
+            --mars-text-muted: #b08a7a;
+        }
+        
+        body { 
+            background: #120e0c; 
+            color: var(--mars-text);
+        }
+        
+        .mars-gradient { 
+            background: linear-gradient(145deg, #b53b2c, #7a2e1a); 
+        }
+        
+        .mars-shadow { 
+            box-shadow: 0 12px 30px -10px rgba(181, 59, 44, 0.4); 
+        }
+        
+        .tab-btn.active { 
+            border-bottom: 4px solid var(--mars-primary); 
+            color: var(--mars-primary); 
+        }
+        
+        .tab-btn { 
+            transition: all 0.2s; 
+            padding: 12px 24px; 
+            font-weight: 600; 
+            cursor: pointer; 
+            color: var(--mars-text-muted);
+        }
+        
+        .tab-btn:hover {
+            color: var(--mars-primary-light);
+        }
+        
+        .tab-content { display: block; }
+        .tab-content.hidden { display: none; }
+        
+        .bg-mars-dark { background-color: var(--mars-bg); }
+        .bg-mars-card { background-color: var(--mars-card); }
+        .border-mars { border-color: var(--mars-border); }
+        .text-mars { color: var(--mars-primary-light); }
+        
+        @media print { 
+            .no-print { display: none !important; } 
+            body { background: white !important; color: black !important; } 
+        }
+        
+        .handle { cursor: grab; color: var(--mars-text-muted); }
+        .handle:active { cursor: grabbing; }
+        
+        #toast { 
+            animation: slideUp 0.3s ease forwards;
+            background: var(--mars-card);
+            border: 1px solid var(--mars-primary);
+            color: var(--mars-text);
+        }
+        #toast.hidden { animation: slideDown 0.3s ease forwards; }
+        
+        @keyframes slideUp { 
+            from { transform: translateY(20px); opacity: 0; } 
+            to { transform: translateY(0); opacity: 1; } 
+        }
+        @keyframes slideDown { 
+            from { transform: translateY(0); opacity: 1; } 
+            to { transform: translateY(20px); opacity: 0; } 
+        }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--mars-bg); }
+        ::-webkit-scrollbar-thumb { background: var(--mars-primary); border-radius: 20px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--mars-primary-dark); }
+        
+        /* Inputs */
+        input, select {
+            background: var(--mars-bg);
+            border-color: var(--mars-border);
+            color: var(--mars-text);
+            transition: all 0.2s;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--mars-primary);
+            box-shadow: 0 0 0 3px rgba(217, 90, 58, 0.2);
+        }
+        input::placeholder {
+            color: var(--mars-text-muted);
+        }
+        
+        /* Cards */
+        .mars-card {
+            background: var(--mars-card);
+            border: 1px solid var(--mars-border);
+            border-radius: 1.5rem;
+        }
+        
+        /* Buttons */
+        .btn-mars {
+            background: linear-gradient(145deg, #b53b2c, #7a2e1a);
+            color: white;
+            transition: all 0.3s;
+        }
+        .btn-mars:hover {
+            opacity: 0.9;
+            transform: scale(1.02);
+        }
+        
+        .btn-mars-outline {
+            border: 2px solid var(--mars-primary);
+            color: var(--mars-primary);
+            background: transparent;
+        }
+        .btn-mars-outline:hover {
+            background: var(--mars-primary);
+            color: white;
+        }
+        
+        .btn-mars-outline.active {
+            border-color: var(--mars-primary);
+            color: var(--mars-primary);
+            background: rgba(217, 90, 58, 0.1);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="max-w-7xl mx-auto px-4">
+        <!-- Header -->
+        <header class="sticky top-0 z-50 bg-[#1e1614]/90 backdrop-blur-lg border-b border-[#4a322a] no-print">
+            <div class="px-4 py-5 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 mars-gradient rounded-2xl flex items-center justify-center text-white font-black text-4xl shadow-lg">⭒</div>
+                    <div>
+                        <h1 class="text-4xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-[#f09070] to-[#d95a3a]">MarsCal</h1>
+                        <p class="text-sm text-[#b08a7a] -mt-1">intergalactic GPA · SGPA · CGPA</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4 no-print">
+                    <button onclick="toggleTheme()" id="theme-toggle" class="p-3 rounded-2xl hover:bg-[#3a2a22] transition-all text-[#d95a3a]">
+                        <i class="fas fa-rocket text-xl"></i>
+                    </button>
+                    <button onclick="exportToPDF()" class="flex items-center gap-2 px-6 py-3 mars-gradient text-white rounded-2xl font-medium transition-all mars-shadow">
+                        <i class="fas fa-download"></i> <span>Export PDF</span>
+                    </button>
+                    <button onclick="printTranscript()" class="flex items-center gap-2 px-6 py-3 bg-[#2a201c] border border-[#4a322a] text-[#eee5de] rounded-2xl font-medium transition-all hover:border-[#d95a3a]">
+                        <i class="fas fa-print"></i> <span>Print</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <div class="flex flex-col lg:flex-row gap-6 py-6">
+            <!-- Sidebar -->
+            <div class="lg:w-96 bg-[#1e1614] border border-[#4a322a] rounded-3xl p-6 lg:min-h-[80vh] overflow-auto no-print">
+                <!-- Student Info -->
+                <div class="mb-8">
+                    <h2 class="text-lg font-semibold mb-4 flex items-center gap-2 text-[#e68a6f]"><i class="fas fa-user-astronaut"></i> Crew Info</h2>
+                    <div class="space-y-3">
+                        <input id="student-name" type="text" placeholder="Explorer name" class="w-full px-4 py-3 rounded-2xl border border-[#4a322a] focus:outline-none focus:border-[#d95a3a] bg-[#1e1614] text-[#eee5de]">
+                        <input id="student-institution" type="text" placeholder="Institution" class="w-full px-4 py-3 rounded-2xl border border-[#4a322a] focus:outline-none focus:border-[#d95a3a] bg-[#1e1614] text-[#eee5de]">
+                        <input id="student-board" type="text" placeholder="Board" class="w-full px-4 py-3 rounded-2xl border border-[#4a322a] focus:outline-none focus:border-[#d95a3a] bg-[#1e1614] text-[#eee5de]">
+                        <input id="student-subject" type="text" placeholder="Subject/Group" class="w-full px-4 py-3 rounded-2xl border border-[#4a322a] focus:outline-none focus:border-[#d95a3a] bg-[#1e1614] text-[#eee5de]">
+                        <input id="student-session" type="text" placeholder="Session (e.g., 2022-2023)" class="w-full px-4 py-3 rounded-2xl border border-[#4a322a] focus:outline-none focus:border-[#d95a3a] bg-[#1e1614] text-[#eee5de]">
+                        <div class="grid grid-cols-2 gap-3">
+                            <input id="student-roll" type="text" placeholder="Roll" class="w-full px-4 py-3 rounded-2xl border border-[#4a322a] focus:outline-none focus:border-[#d95a3a] bg-[#1e1614] text-[#eee5de]">
+                            <input id="student-registration" type="text" placeholder="Registration" class="w-full px-4 py-3 rounded-2xl border border-[#4a322a] focus:outline-none focus:border-[#d95a3a] bg-[#1e1614] text-[#eee5de]">
+                        </div>
+                        <input id="student-exam-name" type="text" placeholder="Examination Name" class="w-full px-4 py-3 rounded-2xl border border-[#4a322a] focus:outline-none focus:border-[#d95a3a] bg-[#1e1614] text-[#eee5de]">
+                        <input id="student-exam-year" type="text" placeholder="Examination Year" class="w-full px-4 py-3 rounded-2xl border border-[#4a322a] focus:outline-none focus:border-[#d95a3a] bg-[#1e1614] text-[#eee5de]">
+                    </div>
+                </div>
+
+                <!-- Grading System -->
+                <div class="mb-8">
+                    <h2 class="text-lg font-semibold mb-4 flex items-center gap-2 text-[#e68a6f]"><i class="fas fa-globe-americas"></i> Grading System</h2>
+                    <select id="grading-system" onchange="changeGradingSystem()" class="w-full px-4 py-3 rounded-2xl border border-[#4a322a] focus:outline-none focus:border-[#d95a3a] bg-[#1e1614] text-[#eee5de]"></select>
+                </div>
+
+                <!-- Credit Mode -->
+                <div>
+                    <h2 class="text-lg font-semibold mb-4 text-[#e68a6f]">Credit Mode</h2>
+                    <div class="flex gap-3">
+                        <button onclick="setCreditMode('equal')" id="equal-btn" class="flex-1 py-4 rounded-2xl border-2 font-medium transition-all border-[#d95a3a] text-[#d95a3a]">Equal</button>
+                        <button onclick="setCreditMode('variable')" id="variable-btn" class="flex-1 py-4 rounded-2xl border-2 font-medium transition-all border-[#4a322a] text-[#b08a7a]">Variable</button>
+                    </div>
+                </div>
+                <div class="mt-8 text-center text-[#7a5a4a] text-xs"><i class="fas fa-map-pin"></i> Olympus Mons · Sol 2026</div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="flex-1 bg-[#1e1614] border border-[#4a322a] rounded-3xl p-6 lg:p-8">
+                <!-- Tabs -->
+                <div class="flex border-b border-[#4a322a] mb-8 no-print">
+                    <button onclick="showTab(0)" class="tab-btn active"><i class="fas fa-layer-group mr-2"></i>Semesters</button>
+                    <button onclick="showTab(1)" class="tab-btn"><i class="fas fa-chart-pie mr-2"></i>Charts</button>
+                    <button onclick="showTab(2)" class="tab-btn"><i class="fas fa-exchange-alt mr-2"></i>Convert</button>
+                </div>
+
+                <!-- Semesters Tab -->
+                <div id="tab-0" class="tab-content">
+                    <div id="semesters-container" class="space-y-8"></div>
+                    <button onclick="addSemester()" class="mt-8 w-full py-6 border-2 border-dashed border-[#4a322a] rounded-3xl text-[#b08a7a] hover:text-[#d95a3a] hover:border-[#d95a3a] flex items-center justify-center gap-3 text-lg transition no-print">
+                        <i class="fas fa-plus"></i> Add New Semester
+                    </button>
+                </div>
+
+                <!-- Charts Tab -->
+                <div id="tab-1" class="tab-content hidden no-print">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="bg-[#2a201c] rounded-3xl p-6 border border-[#4a322a]">
+                            <h3 class="font-semibold mb-4 text-[#e68a6f]">Grade distribution</h3>
+                            <canvas id="pieChart" height="280"></canvas>
+                        </div>
+                        <div class="bg-[#2a201c] rounded-3xl p-6 border border-[#4a322a]">
+                            <h3 class="font-semibold mb-4 text-[#e68a6f]">GPA trend</h3>
+                            <canvas id="lineChart" height="280"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Convert Tab -->
+                <div id="tab-2" class="tab-content hidden no-print">
+                    <div class="bg-[#2a201c] rounded-3xl p-8 border border-[#4a322a]">
+                        <h3 class="font-semibold mb-6 text-[#e68a6f]">Result Conversion</h3>
+                        <div class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-medium mb-2 text-[#b08a7a]">Current CGPA: <span id="current-cgpa-display" class="font-bold text-[#d95a3a]">0.00</span></label>
+                                <label class="block text-sm font-medium mb-2 text-[#b08a7a]">Current Scale: <span id="current-scale-display" class="font-medium text-[#eee5de]">Bangladesh (4.00 Scale)</span></label>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2 text-[#b08a7a]">Convert to:</label>
+                                <select id="convert-target" class="w-full px-4 py-3 rounded-2xl border border-[#4a322a] focus:outline-none focus:border-[#d95a3a] bg-[#1e1614] text-[#eee5de]"></select>
+                            </div>
+                            <button onclick="convertResult()" class="w-full py-3 mars-gradient text-white rounded-2xl font-medium hover:opacity-90 transition mars-shadow">Convert Result</button>
+                            <button onclick="exportConvertedPDF()" class="w-full py-3 mt-3 bg-gradient-to-br from-[#b53b2c] to-[#7a2e1a] text-white rounded-2xl font-medium hover:opacity-90 transition mars-shadow">
+                                <i class="fas fa-file-pdf mr-2"></i> Export Converted PDF
+                            </button>
+                            <div id="conversion-result" class="mt-4 p-4 bg-[#1e1614] border border-[#4a322a] rounded-2xl hidden">
+                                <p class="text-sm text-[#b08a7a]">Converted CGPA: <span id="converted-cgpa" class="font-bold text-lg text-[#d95a3a]"></span></p>
+                                <p class="text-sm text-[#b08a7a] mt-1">Target Scale: <span id="target-scale-name" class="font-medium text-[#eee5de]"></span></p>
+                                <p class="text-sm text-[#b08a7a] mt-1">Conversion Method: <span class="font-medium text-[#eee5de]">Upper Bound Percentage Mapping</span></p>
+                                <div id="conversion-details" class="mt-3 text-xs text-[#7a5a4a]"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Summary Card -->
+                <div class="mt-12 mars-gradient text-white rounded-3xl p-8 mars-shadow border border-[#d95a3a]/40">
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+                        <div>
+                            <div id="cgpa-display" class="text-5xl font-extrabold tracking-wider">0.00</div>
+                            <div class="text-sm opacity-80">CGPA (Martian)</div>
+                        </div>
+                        <div>
+                            <div id="total-credits" class="text-5xl font-extrabold">0</div>
+                            <div class="text-sm opacity-80">Total Credits</div>
+                        </div>
+                        <div class="col-span-2 flex items-center justify-end gap-2 text-sm opacity-80">
+                            <i class="fas fa-robot"></i> <span>MarsCal v2 · deep space grading</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="hidden fixed bottom-4 right-4 bg-[#2a201c] border border-[#d95a3a] text-[#eee5de] px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 no-print"></div>
+
+    <script>
+    // ============================================================
+    // GRADING SYSTEMS
+    // ============================================================
+    const gradingSystems = {
+        bd5: {
+            id: "bd5",
+            name: "Bangladesh (5.00 Scale)",
+            maxGPA: 5.0,
+            passing: 1.0,
+            grades: [
+                { letter: "A+", point: 5.00, minPercent: 80, maxPercent: 100 },
+                { letter: "A", point: 4.00, minPercent: 70, maxPercent: 79 },
+                { letter: "A-", point: 3.50, minPercent: 60, maxPercent: 69 },
+                { letter: "B", point: 3.00, minPercent: 50, maxPercent: 59 },
+                { letter: "C", point: 2.00, minPercent: 40, maxPercent: 49 },
+                { letter: "D", point: 1.00, minPercent: 33, maxPercent: 39 },
+                { letter: "F", point: 0.00, minPercent: 0, maxPercent: 32 }
+            ]
+        },
+        bd4: {
+            id: "bd4",
+            name: "Bangladesh (4.00 Scale)",
+            maxGPA: 4.0,
+            passing: 2.0,
+            grades: [
+                { letter: "A+", point: 4.00, minPercent: 80, maxPercent: 100 },
+                { letter: "A", point: 3.75, minPercent: 75, maxPercent: 79 },
+                { letter: "A-", point: 3.50, minPercent: 70, maxPercent: 74 },
+                { letter: "B+", point: 3.25, minPercent: 65, maxPercent: 69 },
+                { letter: "B", point: 3.00, minPercent: 60, maxPercent: 64 },
+                { letter: "B-", point: 2.75, minPercent: 55, maxPercent: 59 },
+                { letter: "C+", point: 2.50, minPercent: 50, maxPercent: 54 },
+                { letter: "C", point: 2.25, minPercent: 45, maxPercent: 49 },
+                { letter: "D", point: 2.00, minPercent: 40, maxPercent: 44 },
+                { letter: "F", point: 0.00, minPercent: 0, maxPercent: 39 }
+            ]
+        },
+        india10: {
+            id: "india10",
+            name: "India (10.00 Scale)",
+            maxGPA: 10.0,
+            passing: 4.0,
+            grades: [
+                { letter: "O", point: 10.00, minPercent: 90, maxPercent: 100 },
+                { letter: "A+", point: 9.00, minPercent: 80, maxPercent: 89 },
+                { letter: "A", point: 8.00, minPercent: 70, maxPercent: 79 },
+                { letter: "B+", point: 7.00, minPercent: 60, maxPercent: 69 },
+                { letter: "B", point: 6.00, minPercent: 55, maxPercent: 59 },
+                { letter: "C", point: 5.00, minPercent: 50, maxPercent: 54 },
+                { letter: "P", point: 4.00, minPercent: 40, maxPercent: 49 },
+                { letter: "F", point: 0.00, minPercent: 0, maxPercent: 39 }
+            ]
+        },
+        pakistan4: {
+            id: "pakistan4",
+            name: "Pakistan (4.00 Scale)",
+            maxGPA: 4.0,
+            passing: 1.0,
+            grades: [
+                { letter: "A", point: 4.00, minPercent: 85, maxPercent: 100 },
+                { letter: "A-", point: 3.67, minPercent: 80, maxPercent: 84 },
+                { letter: "B+", point: 3.33, minPercent: 75, maxPercent: 79 },
+                { letter: "B", point: 3.00, minPercent: 71, maxPercent: 74 },
+                { letter: "B-", point: 2.67, minPercent: 68, maxPercent: 70 },
+                { letter: "C+", point: 2.33, minPercent: 64, maxPercent: 67 },
+                { letter: "C", point: 2.00, minPercent: 61, maxPercent: 63 },
+                { letter: "C-", point: 1.67, minPercent: 58, maxPercent: 60 },
+                { letter: "D+", point: 1.33, minPercent: 54, maxPercent: 57 },
+                { letter: "D", point: 1.00, minPercent: 50, maxPercent: 53 },
+                { letter: "F", point: 0.00, minPercent: 0, maxPercent: 49 }
+            ]
+        },
+        us4: {
+            id: "us4",
+            name: "United States (4.00 Scale)",
+            maxGPA: 4.0,
+            passing: 1.0,
+            grades: [
+                { letter: "A", point: 4.00, minPercent: 90, maxPercent: 100 },
+                { letter: "A-", point: 3.70, minPercent: 87, maxPercent: 89 },
+                { letter: "B+", point: 3.30, minPercent: 83, maxPercent: 86 },
+                { letter: "B", point: 3.00, minPercent: 80, maxPercent: 82 },
+                { letter: "B-", point: 2.70, minPercent: 77, maxPercent: 79 },
+                { letter: "C+", point: 2.30, minPercent: 73, maxPercent: 76 },
+                { letter: "C", point: 2.00, minPercent: 70, maxPercent: 72 },
+                { letter: "C-", point: 1.70, minPercent: 67, maxPercent: 69 },
+                { letter: "D+", point: 1.30, minPercent: 65, maxPercent: 66 },
+                { letter: "D", point: 1.00, minPercent: 60, maxPercent: 64 },
+                { letter: "F", point: 0.00, minPercent: 0, maxPercent: 59 }
+            ]
+        },
+        uk: {
+            id: "uk",
+            name: "United Kingdom (Honours Classification)",
+            maxGPA: 100,
+            passing: 40,
+            grades: [
+                { letter: "First Class", point: 70, minPercent: 70, maxPercent: 100 },
+                { letter: "Upper Second (2:1)", point: 60, minPercent: 60, maxPercent: 69 },
+                { letter: "Lower Second (2:2)", point: 50, minPercent: 50, maxPercent: 59 },
+                { letter: "Third Class", point: 40, minPercent: 40, maxPercent: 49 },
+                { letter: "Fail", point: 0, minPercent: 0, maxPercent: 39 }
+            ]
+        },
+        ects: {
+            id: "ects",
+            name: "Europe (ECTS)",
+            maxGPA: 5,
+            passing: 1,
+            grades: [
+                { letter: "A", point: 5, minPercent: 90, maxPercent: 100 },
+                { letter: "B", point: 4, minPercent: 80, maxPercent: 89 },
+                { letter: "C", point: 3, minPercent: 70, maxPercent: 79 },
+                { letter: "D", point: 2, minPercent: 60, maxPercent: 69 },
+                { letter: "E", point: 1, minPercent: 50, maxPercent: 59 },
+                { letter: "FX", point: 0, minPercent: 40, maxPercent: 49 },
+                { letter: "F", point: 0, minPercent: 0, maxPercent: 39 }
+            ]
+        },
+        china4: {
+            id: "china4",
+            name: "China (Common 4.00 Scale)",
+            maxGPA: 4.0,
+            passing: 1.0,
+            grades: [
+                { letter: "A", point: 4.00, minPercent: 90, maxPercent: 100 },
+                { letter: "A-", point: 3.70, minPercent: 85, maxPercent: 89 },
+                { letter: "B+", point: 3.30, minPercent: 82, maxPercent: 84 },
+                { letter: "B", point: 3.00, minPercent: 78, maxPercent: 81 },
+                { letter: "B-", point: 2.70, minPercent: 75, maxPercent: 77 },
+                { letter: "C+", point: 2.30, minPercent: 72, maxPercent: 74 },
+                { letter: "C", point: 2.00, minPercent: 68, maxPercent: 71 },
+                { letter: "C-", point: 1.70, minPercent: 64, maxPercent: 67 },
+                { letter: "D", point: 1.00, minPercent: 60, maxPercent: 63 },
+                { letter: "F", point: 0.00, minPercent: 0, maxPercent: 59 }
+            ]
+        },
+        korea43: {
+            id: "korea43",
+            name: "South Korea (4.30 Scale)",
+            maxGPA: 4.3,
+            passing: 1.0,
+            grades: [
+                { letter: "A+", point: 4.30, minPercent: 95, maxPercent: 100 },
+                { letter: "A0", point: 4.00, minPercent: 90, maxPercent: 94 },
+                { letter: "A-", point: 3.70, minPercent: 85, maxPercent: 89 },
+                { letter: "B+", point: 3.30, minPercent: 80, maxPercent: 84 },
+                { letter: "B0", point: 3.00, minPercent: 75, maxPercent: 79 },
+                { letter: "B-", point: 2.70, minPercent: 70, maxPercent: 74 },
+                { letter: "C+", point: 2.30, minPercent: 65, maxPercent: 69 },
+                { letter: "C0", point: 2.00, minPercent: 60, maxPercent: 64 },
+                { letter: "C-", point: 1.70, minPercent: 55, maxPercent: 59 },
+                { letter: "D+", point: 1.30, minPercent: 50, maxPercent: 54 },
+                { letter: "D0", point: 1.00, minPercent: 45, maxPercent: 49 },
+                { letter: "F", point: 0.00, minPercent: 0, maxPercent: 44 }
+            ]
+        },
+        malaysia4: {
+            id: "malaysia4",
+            name: "Malaysia (4.00 Scale)",
+            maxGPA: 4.0,
+            passing: 1.0,
+            grades: [
+                { letter: "A+", point: 4.00, minPercent: 90, maxPercent: 100 },
+                { letter: "A", point: 4.00, minPercent: 80, maxPercent: 89 },
+                { letter: "A-", point: 3.70, minPercent: 75, maxPercent: 79 },
+                { letter: "B+", point: 3.30, minPercent: 70, maxPercent: 74 },
+                { letter: "B", point: 3.00, minPercent: 65, maxPercent: 69 },
+                { letter: "B-", point: 2.70, minPercent: 60, maxPercent: 64 },
+                { letter: "C+", point: 2.30, minPercent: 55, maxPercent: 59 },
+                { letter: "C", point: 2.00, minPercent: 50, maxPercent: 54 },
+                { letter: "C-", point: 1.70, minPercent: 45, maxPercent: 49 },
+                { letter: "D+", point: 1.30, minPercent: 40, maxPercent: 44 },
+                { letter: "D", point: 1.00, minPercent: 35, maxPercent: 39 },
+                { letter: "F", point: 0.00, minPercent: 0, maxPercent: 34 }
+            ]
+        }
+    };
+
+    // ============================================================
+    // STATE
+    // ============================================================
+    let semesters = [];
+    let currentGradingSystem = 'bd4';
+    let creditMode = 'equal';
+    let semesterCounter = 0;
+    let pieChartInstance = null;
+    let lineChartInstance = null;
+
+    // ============================================================
+    // CORE FUNCTIONS
+    // ============================================================
+    function calculateSemesterGPA(courses) {
+        if (!courses || courses.length === 0) return 0;
+        const scale = gradingSystems[currentGradingSystem];
+        let totalPoints = 0, totalCredits = 0;
+        courses.forEach(course => {
+            const gradeData = scale.grades.find(g => g.letter === course.grade);
+            if (gradeData) {
+                const credit = creditMode === 'equal' ? 1 : (course.credit || 3);
+                totalPoints += gradeData.point * credit;
+                totalCredits += credit;
+            }
+        });
+        return totalCredits === 0 ? 0 : Math.round((totalPoints / totalCredits) * 100) / 100;
+    }
+
+    function calculateCGPA() {
+        let totalPoints = 0, totalCredits = 0;
+        const scale = gradingSystems[currentGradingSystem];
+        semesters.forEach(sem => {
+            sem.courses.forEach(course => {
+                const gradeData = scale.grades.find(g => g.letter === course.grade);
+                if (gradeData) {
+                    const credit = creditMode === 'equal' ? 1 : (course.credit || 3);
+                    totalPoints += gradeData.point * credit;
+                    totalCredits += credit;
+                }
+            });
+        });
+        return totalCredits === 0 ? 0 : Math.round((totalPoints / totalCredits) * 100) / 100;
+    }
+
+    function totalCreditsAll() {
+        let sum = 0;
+        semesters.forEach(sem => {
+            sem.courses.forEach(course => {
+                sum += creditMode === 'equal' ? 1 : (course.credit || 3);
+            });
+        });
+        return sum;
+    }
+
+    function convertCourseGrade(grade, fromSystem, toSystem, credit) {
+        const fromScale = gradingSystems[fromSystem];
+        const toScale = gradingSystems[toSystem];
+        if (!fromScale || !toScale) return { originalGrade: grade, convertedGrade: grade, percentage: null };
+        const fromGrade = fromScale.grades.find(g => g.letter === grade);
+        if (!fromGrade) return { originalGrade: grade, convertedGrade: grade, percentage: null };
+        const percentage = fromGrade.maxPercent;
+        let targetGrade = null, targetPoint = 0;
+        for (const g of toScale.grades) {
+            if (percentage >= g.minPercent && percentage <= g.maxPercent) {
+                targetGrade = g.letter;
+                targetPoint = g.point;
+                break;
+            }
+        }
+        if (!targetGrade) {
+            let minDiff = Infinity;
+            for (const g of toScale.grades) {
+                const diff = Math.abs(percentage - g.maxPercent);
+                if (diff < minDiff) { minDiff = diff; targetGrade = g.letter; targetPoint = g.point; }
+            }
+        }
+        return { originalGrade: grade, convertedGrade: targetGrade, percentage: percentage, fromGradePoint: fromGrade.point, toGradePoint: targetPoint, credit: credit || 1 };
+    }
+
+    // ============================================================
+    // RENDER FUNCTIONS
+    // ============================================================
+    function renderSemesters() {
+        const container = document.getElementById('semesters-container');
+        if (!container) return;
+        container.innerHTML = '';
+        semesters.forEach((sem, semIdx) => {
+            const div = document.createElement('div');
+            div.className = 'bg-[#2a201c] rounded-3xl p-5 border border-[#4a322a]';
+            const semGPA = calculateSemesterGPA(sem.courses);
+            let coursesHTML = '';
+            sem.courses.forEach((course, cIdx) => {
+                const gradeOptions = gradingSystems[currentGradingSystem].grades.map(g => 
+                    `<option value="${g.letter}" ${course.grade === g.letter ? 'selected' : ''}>${g.letter} (${g.point})</option>`
+                ).join('');
+                const creditInput = creditMode === 'variable' ? 
+                    `<input type="number" value="${course.credit || 3}" min="0.5" step="0.5" class="w-16 bg-[#1e1614] border border-[#4a322a] rounded-xl px-2 py-2 text-sm focus:outline-none focus:border-[#d95a3a] text-[#eee5de] credit-input" onchange="updateCourseCredit(${semIdx}, ${cIdx}, this.value)">` : '';
+                coursesHTML += `
+                    <div class="flex items-center gap-3">
+                        <input type="text" value="${course.name}" class="flex-1 bg-[#1e1614] border border-[#4a322a] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#d95a3a] text-[#eee5de]" onchange="updateCourseName(${semIdx}, ${cIdx}, this.value)">
+                        <select class="bg-[#1e1614] border border-[#4a322a] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#d95a3a] text-[#eee5de] grade-select" onchange="updateCourseGrade(${semIdx}, ${cIdx}, this.value)">${gradeOptions}</select>
+                        ${creditInput}
+                        <button onclick="removeCourse(${semIdx}, ${cIdx})" class="text-[#7a5a4a] hover:text-[#d95a3a]"><i class="fas fa-times"></i></button>
+                    </div>
+                `;
+            });
+            div.innerHTML = `
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-grip-vertical text-[#7a5a4a] cursor-grab handle"></i>
+                        <span class="font-semibold text-[#e68a6f]">${sem.name}</span>
+                        <input type="text" value="${sem.name}" class="bg-[#1e1614] border border-[#4a322a] rounded-xl px-3 py-1 text-sm w-36 focus:outline-none focus:border-[#d95a3a] text-[#eee5de]" onchange="updateSemesterName(${semIdx}, this.value)">
+                    </div>
+                    <div class="flex gap-2">
+                        <span class="text-sm text-[#b08a7a]">GPA: <strong class="text-[#e68a6f]">${semGPA.toFixed(2)}</strong></span>
+                        <button onclick="removeSemester(${semIdx})" class="text-[#7a5a4a] hover:text-[#d95a3a]"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+                <div class="space-y-3">${coursesHTML}</div>
+                <button onclick="addCourse(${semIdx})" class="mt-3 text-sm text-[#b08a7a] hover:text-[#d95a3a] flex items-center gap-2"><i class="fas fa-plus"></i> Add Course</button>
+            `;
+            container.appendChild(div);
+        });
+        if (typeof Sortable !== 'undefined') {
+            Sortable.create(container, {
+                handle: '.handle',
+                animation: 200,
+                onEnd: function(evt) {
+                    const [removed] = semesters.splice(evt.oldIndex, 1);
+                    semesters.splice(evt.newIndex, 0, removed);
+                    renderSemesters();
+                    updateSummary();
+                    updateCharts();
+                    saveState();
+                }
+            });
+        }
+        updateSummary();
+        updateCharts();
+    }
+
+    function updateSummary() {
+        const cgpa = calculateCGPA();
+        document.getElementById('cgpa-display').textContent = cgpa.toFixed(2);
+        document.getElementById('total-credits').textContent = totalCreditsAll();
+        document.getElementById('current-cgpa-display').textContent = cgpa.toFixed(2);
+        document.getElementById('current-scale-display').textContent = gradingSystems[currentGradingSystem].name;
+    }
+
+    function populateConvertTarget() {
+        const targetSelect = document.getElementById('convert-target');
+        if (!targetSelect) return;
+        targetSelect.innerHTML = '';
+        Object.keys(gradingSystems).forEach(key => {
+            if (key !== currentGradingSystem) {
+                const option = document.createElement('option');
+                option.value = key;
+                option.textContent = gradingSystems[key].name;
+                targetSelect.appendChild(option);
+            }
+        });
+    }
+
+    // ============================================================
+    // APP FUNCTIONS
+    // ============================================================
+    function init() {
+        const select = document.getElementById('grading-system');
+        if (select) {
+            select.innerHTML = '';
+            Object.keys(gradingSystems).forEach(key => {
+                const opt = document.createElement('option');
+                opt.value = key;
+                opt.textContent = gradingSystems[key].name;
+                select.appendChild(opt);
+            });
+            select.value = currentGradingSystem;
+            select.addEventListener('change', changeGradingSystem);
+        }
+
+        loadState();
+        renderSemesters();
+        updateSummary();
+        populateConvertTarget();
+        updateCharts();
+
+        document.querySelectorAll('[id^="student-"]').forEach(input => {
+            input.addEventListener('change', saveState);
+            input.addEventListener('keyup', saveState);
+        });
+    }
+
+    function changeGradingSystem() {
+        const select = document.getElementById('grading-system');
+        if (select) currentGradingSystem = select.value;
+        renderSemesters();
+        updateSummary();
+        populateConvertTarget();
+        updateCharts();
+        saveState();
+    }
+
+    function setCreditMode(mode) {
+        creditMode = mode;
+        document.getElementById('equal-btn').className = `flex-1 py-4 rounded-2xl border-2 font-medium transition-all ${mode === 'equal' ? 'border-[#d95a3a] text-[#d95a3a]' : 'border-[#4a322a] text-[#b08a7a]'}`;
+        document.getElementById('variable-btn').className = `flex-1 py-4 rounded-2xl border-2 font-medium transition-all ${mode === 'variable' ? 'border-[#d95a3a] text-[#d95a3a]' : 'border-[#4a322a] text-[#b08a7a]'}`;
+        renderSemesters();
+        saveState();
+    }
+
+    function addSemester() {
+        semesters.push({ id: semesterCounter++, name: `Semester ${semesters.length + 1}`, courses: [] });
+        renderSemesters();
+        updateSummary();
+        updateCharts();
+        saveState();
+    }
+
+    function removeSemester(index) {
+        if (semesters.length <= 1) { showToast('At least one semester required'); return; }
+        semesters.splice(index, 1);
+        renderSemesters();
+        updateSummary();
+        updateCharts();
+        saveState();
+    }
+
+    function addCourse(semIndex) {
+        if (!semesters[semIndex]) return;
+        const scale = gradingSystems[currentGradingSystem];
+        const firstGrade = scale.grades.length > 0 ? scale.grades[0].letter : 'A';
+        semesters[semIndex].courses.push({ name: 'New Course', grade: firstGrade, credit: 3 });
+        renderSemesters();
+        updateSummary();
+        updateCharts();
+        saveState();
+    }
+
+    function removeCourse(semIndex, courseIndex) {
+        if (!semesters[semIndex]) return;
+        semesters[semIndex].courses.splice(courseIndex, 1);
+        renderSemesters();
+        updateSummary();
+        updateCharts();
+        saveState();
+    }
+
+    function updateSemesterName(index, name) {
+        if (semesters[index]) { semesters[index].name = name; saveState(); }
+    }
+
+    function updateCourseName(semIndex, courseIndex, name) {
+        if (semesters[semIndex] && semesters[semIndex].courses[courseIndex]) {
+            semesters[semIndex].courses[courseIndex].name = name;
+            saveState();
+        }
+    }
+
+    function updateCourseGrade(semIndex, courseIndex, grade) {
+        if (semesters[semIndex] && semesters[semIndex].courses[courseIndex]) {
+            semesters[semIndex].courses[courseIndex].grade = grade;
+            renderSemesters();
+            updateSummary();
+            updateCharts();
+            saveState();
+        }
+    }
+
+    function updateCourseCredit(semIndex, courseIndex, credit) {
+        if (semesters[semIndex] && semesters[semIndex].courses[courseIndex]) {
+            semesters[semIndex].courses[courseIndex].credit = parseFloat(credit) || 3;
+            renderSemesters();
+            updateSummary();
+            saveState();
+        }
+    }
+
+    // ============================================================
+    // CHARTS
+    // ============================================================
+    function updateCharts() {
+        const gradeCount = {};
+        semesters.forEach(sem => {
+            sem.courses.forEach(c => {
+                const g = c.grade || 'A';
+                gradeCount[g] = (gradeCount[g] || 0) + 1;
+            });
+        });
+        const labels = Object.keys(gradeCount);
+        const data = Object.values(gradeCount);
+        const colors = ['#d95a3a','#e68a6f','#f09a7a','#b08a7a','#7a5a4a','#4a322a','#2a201c'];
+        const pieCtx = document.getElementById('pieChart');
+        if (pieCtx) {
+            if (pieChartInstance) pieChartInstance.destroy();
+            if (labels.length > 0) {
+                pieChartInstance = new Chart(pieCtx, {
+                    type: 'pie',
+                    data: { labels, datasets: [{ data, backgroundColor: colors.slice(0, labels.length), borderColor: '#1e1614', borderWidth: 2 }] },
+                    options: { responsive: true, plugins: { legend: { labels: { color: '#b08a7a' } } } }
+                });
+            }
+        }
+        const lineCtx = document.getElementById('lineChart');
+        if (lineCtx) {
+            if (lineChartInstance) lineChartInstance.destroy();
+            const semGpas = semesters.map(sem => calculateSemesterGPA(sem.courses));
+            if (semGpas.length > 0) {
+                const maxVal = Math.max(4.5, ...semGpas.map(g => g + 0.5));
+                lineChartInstance = new Chart(lineCtx, {
+                    type: 'line',
+                    data: { labels: semesters.map((_,i) => `Sem ${i+1}`), datasets: [{ label: 'GPA', data: semGpas, borderColor: '#d95a3a', backgroundColor: '#d95a3a20', fill: true, tension: 0.3 }] },
+                    options: { responsive: true, plugins: { legend: { labels: { color: '#b08a7a' } } }, scales: { y: { min: 0, max: Math.ceil(maxVal), grid: { color: '#4a322a' } }, x: { grid: { color: '#4a322a' } } } }
+                });
+            }
+        }
+    }
+
+    // ============================================================
+    // TABS
+    // ============================================================
+    function showTab(index) {
+        document.querySelectorAll('.tab-content').forEach((el, i) => {
+            el.classList.toggle('hidden', i !== index);
+        });
+        document.querySelectorAll('.tab-btn').forEach((btn, i) => {
+            btn.classList.toggle('active', i === index);
+        });
+        if (index === 1) setTimeout(updateCharts, 100);
+        if (index === 2) { populateConvertTarget(); updateSummary(); }
+    }
+
+    // ============================================================
+    // CONVERT
+    // ============================================================
+    function convertResult() {
+        const cgpa = calculateCGPA();
+        const targetSystem = document.getElementById('convert-target').value;
+        if (!targetSystem) { showToast('Please select a target system'); return; }
+        const allCourses = [];
+        semesters.forEach(sem => {
+            sem.courses.forEach(course => {
+                allCourses.push({ grade: course.grade, credit: course.credit || 3 });
+            });
+        });
+        let totalPoints = 0, totalCredits = 0;
+        allCourses.forEach(course => {
+            const converted = convertCourseGrade(course.grade, currentGradingSystem, targetSystem, course.credit || 1);
+            totalPoints += converted.toGradePoint * (course.credit || 1);
+            totalCredits += (course.credit || 1);
+        });
+        const convertedCGPA = totalCredits === 0 ? 0 : Math.round((totalPoints / totalCredits) * 100) / 100;
+        let detailsHTML = '<div class="mt-2">';
+        allCourses.forEach((course, i) => {
+            const converted = convertCourseGrade(course.grade, currentGradingSystem, targetSystem, course.credit || 1);
+            detailsHTML += `<div class="text-xs text-[#7a5a4a] mt-1">Course ${i+1}: ${course.grade} → ${converted.percentage}% → ${converted.convertedGrade}</div>`;
+        });
+        detailsHTML += '</div>';
+        document.getElementById('converted-cgpa').textContent = convertedCGPA.toFixed(2);
+        document.getElementById('target-scale-name').textContent = gradingSystems[targetSystem].name;
+        document.getElementById('conversion-result').classList.remove('hidden');
+        document.getElementById('conversion-details').innerHTML = detailsHTML;
+        showToast(`Converted to ${gradingSystems[targetSystem].name}: ${convertedCGPA.toFixed(2)}`);
+    }
+
+    // ============================================================
+    // TRANSCRIPT GENERATOR (UPDATED - Supports both original & converted)
+    // ============================================================
+    function generateTranscriptHTML(useConverted = false, targetSystem = null) {
+        // Get student info
+        const studentName = document.getElementById('student-name')?.value || 'Not Provided';
+        const institution = document.getElementById('student-institution')?.value || '';
+        const board = document.getElementById('student-board')?.value || '';
+        const subject = document.getElementById('student-subject')?.value || '';
+        const roll = document.getElementById('student-roll')?.value || '';
+        const registration = document.getElementById('student-registration')?.value || '';
+        const examName = document.getElementById('student-exam-name')?.value || '';
+        const examYear = document.getElementById('student-exam-year')?.value || '';
+        const session = document.getElementById('student-session')?.value || '';
+        
+        // Get academic data - use converted if requested
+        let cgpa, totalCredits, fromScale, scaleName, semesterData;
+        
+        if (useConverted && targetSystem) {
+            // Use converted data
+            const convertedResult = getConvertedResult(targetSystem);
+            cgpa = convertedResult.cgpa;
+            totalCredits = convertedResult.totalCredits;
+            fromScale = gradingSystems[targetSystem];
+            scaleName = fromScale?.name || targetSystem;
+            semesterData = convertedResult.semesters;
+        } else {
+            // Use original data
+            cgpa = calculateCGPA();
+            totalCredits = totalCreditsAll();
+            fromScale = gradingSystems[currentGradingSystem];
+            scaleName = fromScale?.name || 'Unknown Scale';
+            semesterData = semesters;
+        }
+        
+        // Generate semester tables
+        let semesterTables = '';
+        semesterData.forEach((sem, idx) => {
+            const semGPA = calculateSemesterGPA(sem.courses);
+            semesterTables += `
+                <div style="margin-bottom:15px;">
+                    <h3 style="font-size:13px;font-weight:bold;margin-bottom:4px;border-bottom:1px solid #ccc;padding-bottom:3px;color:#b53b2c;">
+                        ${sem.name} <span style="float:right;font-weight:normal;color:#333;font-size:12px;">GPA: ${semGPA.toFixed(2)}</span>
+                    </h3>
+                    <table style="width:100%;border-collapse:collapse;font-size:10px;">
+                        <thead>
+                            <tr style="background:#f0f0f0;">
+                                <th style="border:1px solid #999;padding:3px 5px;text-align:center;width:6%;">SL</th>
+                                <th style="border:1px solid #999;padding:3px 5px;text-align:left;">Course Name</th>
+                                <th style="border:1px solid #999;padding:3px 5px;text-align:center;width:10%;">Credit</th>
+                                <th style="border:1px solid #999;padding:3px 5px;text-align:center;width:10%;">Grade</th>
+                                <th style="border:1px solid #999;padding:3px 5px;text-align:center;width:12%;">Grade Point</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${sem.courses.map((course, ci) => {
+                                const gradeData = fromScale?.grades?.find(g => g.letter === course.grade);
+                                const credit = creditMode === 'equal' ? 1 : (course.credit || 3);
+                                const point = gradeData?.point !== undefined ? gradeData.point.toFixed(2) : 'N/A';
+                                return `
+                                    <tr style="${ci % 2 === 0 ? 'background:#ffffff;' : 'background:#f9fafb;'}">
+                                        <td style="border:1px solid #999;padding:3px 5px;text-align:center;">${ci + 1}</td>
+                                        <td style="border:1px solid #999;padding:3px 5px;">${course.name}</td>
+                                        <td style="border:1px solid #999;padding:3px 5px;text-align:center;">${credit}</td>
+                                        <td style="border:1px solid #999;padding:3px 5px;text-align:center;font-weight:600;">${course.grade}</td>
+                                        <td style="border:1px solid #999;padding:3px 5px;text-align:center;">${point}</td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        });
+
+        // Build transcript HTML
+        const titleSuffix = useConverted ? ' (CONVERTED)' : '';
+        return `
+            <div style="font-family:'Times New Roman',serif;max-width:170mm;margin:0 auto;padding:8mm;border:3px double #b53b2c;border-radius:4px;background:white;color:black;">
+                
+                <!-- Top: Board and Transcript Title -->
+                <div style="text-align:center;border-bottom:2px solid #b53b2c;padding-bottom:6px;margin-bottom:10px;">
+                    <div style="font-size:16px;font-weight:bold;color:#b53b2c;">${board || 'BOARD OF INTERMEDIATE AND SECONDARY EDUCATION'}</div>
+                    <div style="font-size:14px;font-weight:bold;color:#b53b2c;">${institution || 'INSTITUTION NAME'}</div>
+                    <div style="font-size:13px;font-weight:bold;margin-top:2px;">ACADEMIC TRANSCRIPT${titleSuffix}</div>
+                    <div style="font-size:11px;color:#555;margin-top:2px;">${examName || 'Examination'} - ${examYear || 'Year'}</div>
+                </div>
+                
+                <!-- Right: Grade Scale Box -->
+                <div style="float:right;width:auto;margin-left:10px;margin-bottom:8px;border:1px solid #b53b2c;padding:4px 8px;font-size:9px;background:#fdf6f3;">
+                    <div style="font-weight:bold;text-align:center;color:#b53b2c;font-size:10px;">Grading Scale</div>
+                    <table style="border-collapse:collapse;font-size:8px;">
+                        <thead>
+                            <tr><th style="border:1px solid #ccc;padding:1px 4px;">Grade</th><th style="border:1px solid #ccc;padding:1px 4px;">% Range</th><th style="border:1px solid #ccc;padding:1px 4px;">Point</th></tr>
+                        </thead>
+                        <tbody>
+                            ${fromScale?.grades?.map(g => `
+                                <tr><td style="border:1px solid #ccc;padding:1px 4px;">${g.letter}</td><td style="border:1px solid #ccc;padding:1px 4px;">${g.minPercent}-${g.maxPercent}</td><td style="border:1px solid #ccc;padding:1px 4px;">${g.point}</td></tr>
+                            `).join('') || ''}
+                        </tbody>
+                    </table>
+                    <div style="text-align:center;font-size:7px;color:#777;margin-top:2px;">Scale: ${scaleName}</div>
+                </div>
+                
+                <!-- Student Info -->
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px 20px;margin-bottom:8px;font-size:11px;border:1px solid #ddd;padding:6px 10px;border-radius:3px;background:#fafafa;">
+                    <div><strong>Name:</strong> ${studentName}</div>
+                    <div><strong>Roll:</strong> ${roll}</div>
+                    <div><strong>Registration:</strong> ${registration}</div>
+                    <div><strong>Group/Subject:</strong> ${subject}</div>
+                    <div><strong>Institution:</strong> ${institution}</div>
+                    <div><strong>Board:</strong> ${board}</div>
+                    <div><strong>Session:</strong> ${session}</div>
+                    <div><strong>Exam:</strong> ${examName} - ${examYear}</div>
+                </div>
+                
+                <!-- Semester Results -->
+                <div style="margin-bottom:8px;">
+                    ${semesterTables}
+                </div>
+                
+                <!-- Summary: CGPA & Total Credits -->
+                <div style="background:#f0f0f0;border:1px solid #b53b2c;border-radius:3px;padding:6px 10px;margin:6px 0;display:flex;justify-content:space-around;text-align:center;">
+                    <div><span style="font-weight:bold;font-size:12px;">CGPA:</span> <span style="font-weight:bold;font-size:14px;color:#b53b2c;">${cgpa.toFixed(2)}</span></div>
+                    <div><span style="font-weight:bold;font-size:12px;">Total Credits:</span> <span style="font-weight:bold;font-size:14px;color:#b53b2c;">${totalCredits}</span></div>
+                    <div><span style="font-weight:bold;font-size:12px;">Semesters:</span> <span style="font-weight:bold;font-size:14px;color:#b53b2c;">${semesterData.length}</span></div>
+                </div>
+                
+                <!-- Signatures -->
+                <div style="margin-top:18px;padding-top:12px;border-top:2px solid #b53b2c;display:grid;grid-template-columns:1fr 1fr;gap:30px;">
+                    <div style="text-align:center;">
+                        <div style="border-bottom:1px solid #333;padding-bottom:20px;margin-bottom:3px;">&nbsp;</div>
+                        <div style="font-size:10px;font-weight:bold;">Controller of Examinations</div>
+                        <div style="font-size:9px;color:#666;">Signature & Date</div>
+                    </div>
+                    <div style="text-align:center;">
+                        <div style="border-bottom:1px solid #333;padding-bottom:20px;margin-bottom:3px;">&nbsp;</div>
+                        <div style="font-size:10px;font-weight:bold;">Head of Department / Principal</div>
+                        <div style="font-size:9px;color:#666;">Signature & Date</div>
+                    </div>
+                </div>
+                
+                <!-- Footer -->
+                <div style="text-align:center;font-size:8px;color:#999;margin-top:12px;border-top:1px solid #ddd;padding-top:6px;">
+                    Generated by MarsCal | ${new Date().toLocaleDateString()}
+                </div>
+            </div>
+        `;
+    }
+
+    // ============================================================
+    // GET CONVERTED RESULT
+    // ============================================================
+    function getConvertedResult(targetSystem) {
+        const allCourses = [];
+        semesters.forEach(sem => {
+            sem.courses.forEach(course => {
+                allCourses.push({
+                    grade: course.grade,
+                    credit: course.credit || 3,
+                    name: course.name
+                });
+            });
+        });
+        
+        // Convert each course
+        const convertedCourses = allCourses.map(course => {
+            const converted = convertCourseGrade(course.grade, currentGradingSystem, targetSystem, course.credit || 1);
+            return {
+                name: course.name,
+                grade: converted.convertedGrade,
+                credit: course.credit || 3,
+                originalGrade: course.grade
+            };
+        });
+        
+        // Calculate converted CGPA
+        const scale = gradingSystems[targetSystem];
+        let totalPoints = 0, totalCredits = 0;
+        convertedCourses.forEach(course => {
+            const gradeData = scale?.grades?.find(g => g.letter === course.grade);
+            if (gradeData) {
+                totalPoints += gradeData.point * course.credit;
+                totalCredits += course.credit;
+            }
+        });
+        const convertedCGPA = totalCredits === 0 ? 0 : Math.round((totalPoints / totalCredits) * 100) / 100;
+        
+        // Return converted data
+        return {
+            cgpa: convertedCGPA,
+            totalCredits: totalCredits,
+            semesters: [{
+                name: 'Converted Result',
+                courses: convertedCourses
+            }]
+        };
+    }
+
+    // ============================================================
+    // EXPORT FUNCTIONS (UPDATED)
+    // ============================================================
+    function exportToPDF() {
+        showToast('Generating transcript...');
+        if (typeof html2canvas === 'undefined' || typeof window.jspdf === 'undefined') {
+            showToast('Loading PDF libraries...');
+            loadPDFLibraries();
+            return;
+        }
+        try {
+            const transcriptHTML = generateTranscriptHTML(false);
+            const container = document.createElement('div');
+            container.id = 'transcript-container';
+            container.style.cssText = 'position:fixed;left:-9999px;top:0;width:210mm;padding:5mm;background:white;color:black;font-family:Times New Roman,serif;z-index:9999;';
+            container.innerHTML = transcriptHTML;
+            document.body.appendChild(container);
+            const { jsPDF } = window.jspdf;
+            html2canvas(container, { scale: 2, backgroundColor: '#ffffff', logging: false, allowTaint: true, useCORS: true }).then(canvas => {
+                document.body.removeChild(container);
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                let heightLeft = pdfHeight - pdf.internal.pageSize.getHeight();
+                let position = -pdf.internal.pageSize.getHeight();
+                while (heightLeft > 0) {
+                    position -= pdf.internal.pageSize.getHeight();
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
+                    heightLeft -= pdf.internal.pageSize.getHeight();
+                }
+                const studentName = document.getElementById('student-name')?.value || 'Transcript';
+                pdf.save(`Transcript_${studentName.replace(/\s+/g, '_')}.pdf`);
+                showToast('Transcript downloaded successfully!');
+            }).catch(error => {
+                document.body.removeChild(container);
+                console.error('PDF error:', error);
+                showToast('Error generating PDF. Please try again.');
+            });
+        } catch (error) {
+            console.error('Export error:', error);
+            showToast('Error: ' + error.message);
+        }
+    }
+
+    // ============================================================
+    // EXPORT CONVERTED PDF (NEW FUNCTION)
+    // ============================================================
+    function exportConvertedPDF() {
+        const targetSystem = document.getElementById('convert-target')?.value;
+        if (!targetSystem) {
+            showToast('Please select a target system first!');
+            return;
+        }
+        
+        showToast('Generating converted transcript...');
+        if (typeof html2canvas === 'undefined' || typeof window.jspdf === 'undefined') {
+            showToast('Loading PDF libraries...');
+            loadPDFLibraries();
+            return;
+        }
+        try {
+            const transcriptHTML = generateTranscriptHTML(true, targetSystem);
+            const container = document.createElement('div');
+            container.id = 'transcript-container';
+            container.style.cssText = 'position:fixed;left:-9999px;top:0;width:210mm;padding:5mm;background:white;color:black;font-family:Times New Roman,serif;z-index:9999;';
+            container.innerHTML = transcriptHTML;
+            document.body.appendChild(container);
+            const { jsPDF } = window.jspdf;
+            html2canvas(container, { scale: 2, backgroundColor: '#ffffff', logging: false, allowTaint: true, useCORS: true }).then(canvas => {
+                document.body.removeChild(container);
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                let heightLeft = pdfHeight - pdf.internal.pageSize.getHeight();
+                let position = -pdf.internal.pageSize.getHeight();
+                while (heightLeft > 0) {
+                    position -= pdf.internal.pageSize.getHeight();
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
+                    heightLeft -= pdf.internal.pageSize.getHeight();
+                }
+                const studentName = document.getElementById('student-name')?.value || 'Transcript';
+                pdf.save(`Converted_Transcript_${studentName.replace(/\s+/g, '_')}.pdf`);
+                showToast('Converted transcript downloaded successfully!');
+            }).catch(error => {
+                document.body.removeChild(container);
+                console.error('PDF error:', error);
+                showToast('Error generating PDF. Please try again.');
+            });
+        } catch (error) {
+            console.error('Export error:', error);
+            showToast('Error: ' + error.message);
+        }
+    }
+
+    function printTranscript() { showToast('Opening print dialog...'); window.print(); }
+
+    function loadPDFLibraries() {
+        let loaded = 0;
+        const checkLoaded = () => { loaded++; if (loaded === 2) showToast('Libraries loaded! Click Export again.'); };
+        if (typeof html2canvas === 'undefined') {
+            const s = document.createElement('script');
+            s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+            s.onload = checkLoaded;
+            document.head.appendChild(s);
+        } else checkLoaded();
+        if (typeof window.jspdf === 'undefined') {
+            const s = document.createElement('script');
+            s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+            s.onload = checkLoaded;
+            document.head.appendChild(s);
+        } else checkLoaded();
+    }
+
+    // ============================================================
+    // STORAGE
+    // ============================================================
+    function saveState() {
+        try {
+            const studentInfo = {
+                name: document.getElementById('student-name')?.value || '',
+                institution: document.getElementById('student-institution')?.value || '',
+                board: document.getElementById('student-board')?.value || '',
+                subject: document.getElementById('student-subject')?.value || '',
+                roll: document.getElementById('student-roll')?.value || '',
+                registration: document.getElementById('student-registration')?.value || '',
+                examName: document.getElementById('student-exam-name')?.value || '',
+                examYear: document.getElementById('student-exam-year')?.value || '',
+                session: document.getElementById('student-session')?.value || ''
+            };
+            localStorage.setItem('marsCalState', JSON.stringify({ semesters, creditMode, currentGradingSystem, studentInfo }));
+        } catch(e) {}
+    }
+
+    function loadState() {
+        try {
+            const raw = localStorage.getItem('marsCalState');
+            if (!raw) return;
+            const data = JSON.parse(raw);
+            if (data.semesters) { semesters = data.semesters; semesterCounter = semesters.length; }
+            if (data.creditMode) { creditMode = data.creditMode; }
+            if (data.currentGradingSystem) {
+                currentGradingSystem = data.currentGradingSystem;
+                const select = document.getElementById('grading-system');
+                if (select) select.value = currentGradingSystem;
+            }
+            if (data.studentInfo) {
+                Object.keys(data.studentInfo).forEach(key => {
+                    const input = document.getElementById(`student-${key}`);
+                    if (input) input.value = data.studentInfo[key] || '';
+                });
+            }
+        } catch(e) {}
+    }
+
+    // ============================================================
+    // MISC
+    // ============================================================
+    function toggleTheme() {
+        document.body.classList.toggle('dark');
+        const icon = document.querySelector('#theme-toggle i');
+        if (icon) {
+            icon.className = document.body.classList.contains('dark') ? 'fas fa-sun text-xl' : 'fas fa-rocket text-xl';
+        }
+    }
+
+    function showToast(message) {
+        const toast = document.getElementById('toast');
+        if (!toast) return;
+        toast.innerHTML = `<i class="fas fa-asterisk text-[#d95a3a]"></i> ${message}`;
+        toast.classList.remove('hidden');
+        clearTimeout(toast._hide);
+        toast._hide = setTimeout(() => toast.classList.add('hidden'), 2500);
+    }
+
+    // ============================================================
+    // GLOBAL FUNCTIONS
+    // ============================================================
+    window.init = init;
+    window.addSemester = addSemester;
+    window.removeSemester = removeSemester;
+    window.addCourse = addCourse;
+    window.removeCourse = removeCourse;
+    window.changeGradingSystem = changeGradingSystem;
+    window.setCreditMode = setCreditMode;
+    window.showTab = showTab;
+    window.exportToPDF = exportToPDF;
+    window.exportConvertedPDF = exportConvertedPDF;
+    window.printTranscript = printTranscript;
+    window.toggleTheme = toggleTheme;
+    window.convertResult = convertResult;
+    window.updateSemesterName = updateSemesterName;
+    window.updateCourseName = updateCourseName;
+    window.updateCourseGrade = updateCourseGrade;
+    window.updateCourseCredit = updateCourseCredit;
+    window.calculateCGPA = calculateCGPA;
+    window.calculateSemesterGPA = calculateSemesterGPA;
+    window.totalCreditsAll = totalCreditsAll;
+    window.generateTranscriptHTML = generateTranscriptHTML;
+    window.getConvertedResult = getConvertedResult;
+
+    // ============================================================
+    // START
+    // ============================================================
+    document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
